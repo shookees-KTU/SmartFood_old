@@ -21,25 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package smartfood;
 
 import jade.core.Agent;
-import jade.wrapper.ContainerController;
 
 /**
- * Main agent for Smart Food System server container
- * This class is the intelligent agent which configures it's container
- * And helping classes
+ * Yummly service communicator.
+ * It serves for the SmartFood agent and communicates with Yummly to get data.
  * @author Paulius Šukys
  */
-public class SmartFood extends Agent
+public class Yummly extends Agent
 {
-    Agent yummly_agent;
-    Agent comm_agent;
     @Override
-    /**
-     * Includes agent initializations
-     */
     protected void setup()
     {
         System.out.println("I am " + getAID().getName());
