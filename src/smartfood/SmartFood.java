@@ -24,7 +24,6 @@
 package smartfood;
 
 import jade.core.Agent;
-import jade.wrapper.ContainerController;
 
 /**
  * Main agent for Smart Food System server container
@@ -34,14 +33,15 @@ import jade.wrapper.ContainerController;
  */
 public class SmartFood extends Agent
 {
-    Agent yummly_agent;
-    Agent comm_agent;
+    private Agent yummly_agent;
+    private Agent comm_agent;
     @Override
     /**
      * Includes agent initializations
      */
     protected void setup()
     {
+        
         System.out.println("I am " + getAID().getName());
     }
 }
