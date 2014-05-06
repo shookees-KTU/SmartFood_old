@@ -25,8 +25,6 @@ package smartfood;
 
 import jade.core.Agent;
 
-import java.io.IOException;
-
 
 /**
  * Main agent for Smart Food System server container
@@ -44,7 +42,12 @@ public class SmartFood extends Agent
      */
     protected void setup()
     {
-        //setting up the logger
         System.out.println("I am " + getAID().getName());
+    }
+    
+    @Override
+    protected void takeDown()
+    {
+        System.out.println("Agent "+ getAID().getName() + " terminating.");
     }
 }

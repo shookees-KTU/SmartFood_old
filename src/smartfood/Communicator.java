@@ -38,4 +38,10 @@ public class Communicator extends Agent
     {
         System.out.println("I am " + getAID().getName());
     }
+    
+    @Override
+    protected void takeDown()
+    {
+        System.out.println("Agent "+ getAID().getName() + " terminating.");
+    }
 }
