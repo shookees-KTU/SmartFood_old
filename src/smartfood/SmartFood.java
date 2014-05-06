@@ -41,7 +41,6 @@ public class SmartFood extends Agent
      */
     protected void setup()
     {
-        
         System.out.println("I am " + getAID().getName());
     }
 }

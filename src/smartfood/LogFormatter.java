@@ -69,4 +69,21 @@ public class LogFormatter extends Formatter
         Date date = new Date(ms);
         return date_format.format(date);
     }
+    
+    public String getHead(Handler h)
+    {
+        return "<html><head>" + (new Date()) 
+        + "\n</head>\n<body>\n<pre>\n"
+        + "<table width=\"100%\" border>\n  "
+        + "<tr><th>Level</th>" +
+        "<th>Time</th>" +
+        "<th>Log Message</th>" +
+        "</tr>\n";
+    }
+    
+    public String getTail(Handler h)
+    {
+        //called after the handler and thus formatter is closed
+        return "</table></pre></body></html>";
+    }
 }
