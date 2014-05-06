@@ -25,6 +25,7 @@
 package smartfood;
 
 import  jade.core.Agent;
+import jade.core.behaviours.OneShotBehaviour;
 
 /**
  * Communication agent between mobile and server containers.
@@ -36,7 +37,14 @@ public class Communicator extends Agent
     @Override
     protected void setup()
     {
-        System.out.println("I am " + getAID().getName());
+        addBehaviour(new OneShotBehaviour(this)
+        {
+           @Override
+           public void action()
+           {
+               System.out.println("I am " + getAID().getName());
+           }
+        });
     }
     
     @Override

@@ -23,7 +23,12 @@
  */
 package smartfood;
 
+import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.OneShotBehaviour;
+import jade.wrapper.AgentContainer;
+import jade.wrapper.AgentController;
+import jade.wrapper.StaleProxyException;
 
 
 /**
@@ -34,20 +39,49 @@ import jade.core.Agent;
  */
 public class SmartFood extends Agent
 {
-    private Agent yummly_agent;
-    private Agent comm_agent;
+    //Main-Container -> Server container
+    private AgentController AController;//used for creating new agents
+    
+    private AID yummly_agent;
+    private AID comm_agent;
     @Override
     /**
      * Includes agent initializations
      */
     protected void setup()
     {
-        System.out.println("I am " + getAID().getName());
+        addBehaviour(new OneShotBehaviour(this)
+        {
+           @Override
+           public void action()
+           {
+               System.out.println("I am " + getAID().getName());
+               createAgent("Yummly");
+               yummly_agent = new AID("Yummly", AID.ISLOCALNAME);
+               createAgent("Communicator");
+               comm_agent = new AID("Communicator", AID.ISLOCALNAME);
+           }
+        });
     }
     
     @Override
     protected void takeDown()
     {
         System.out.println("Agent "+ getAID().getName() + " terminating.");
+    }
+    
+    protected void createAgent(String agent_name)
+    {
+        try
+        {
+            AgentContainer container = (AgentContainer)getContainerController();
+            AController = container.createNewAgent(agent_name, 
+                    this.getClass().getPackage().getName() + "." + agent_name,
+                    null);
+            AController.start();
+        }catch(StaleProxyException exc)
+        {
+            throw new RuntimeException("Klaida sukuriant agentą.");
+        }
     }
 }
