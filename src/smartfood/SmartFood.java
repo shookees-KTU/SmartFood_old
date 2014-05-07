@@ -40,10 +40,9 @@ import jade.wrapper.StaleProxyException;
 public class SmartFood extends Agent
 {
     //Main-Container -> Server container
-    private AgentController AController;//used for creating new agents
+    private AgentController yummly_agent;
+    private AgentController comm_agent;
     
-    private AID yummly_agent;
-    private AID comm_agent;
     @Override
     /**
      * Includes agent initializations
@@ -52,15 +51,22 @@ public class SmartFood extends Agent
     {
         addBehaviour(new OneShotBehaviour(this)
         {
-           @Override
-           public void action()
-           {
-               System.out.println("I am " + getAID().getName());
-               createAgent("Yummly");
-               yummly_agent = new AID("Yummly", AID.ISLOCALNAME);
-               createAgent("Communicator");
-               comm_agent = new AID("Communicator", AID.ISLOCALNAME);
-           }
+            @Override
+            public void action()
+            {
+                System.out.println("I am " + getAID().getName());
+                try
+                {
+                    yummly_agent = createAgent("Yummly");
+                    System.out.println("Created: " + yummly_agent.getName());
+                    comm_agent = createAgent("Communicator");
+                    System.out.println("Created: " + comm_agent.getName());
+                }catch (StaleProxyException exc)
+                {
+                    System.out.println("Error creating agents\n");
+                    exc.printStackTrace();
+                }
+            }
         });
     }
     
@@ -70,18 +76,21 @@ public class SmartFood extends Agent
         System.out.println("Agent "+ getAID().getName() + " terminating.");
     }
     
-    protected void createAgent(String agent_name)
+    /**
+     * Creates a new agent in local container
+     * 
+     * @param agent_name the name of the agent
+     * @return AController AgentController object created in local container
+     * @throws StaleProxyException when an attempt to use stale (i.e. outdated) wrapper object is made
+     */
+    protected AgentController createAgent(String agent_name)
+            throws StaleProxyException
     {
-        try
-        {
-            AgentContainer container = (AgentContainer)getContainerController();
-            AController = container.createNewAgent(agent_name, 
-                    this.getClass().getPackage().getName() + "." + agent_name,
-                    null);
-            AController.start();
-        }catch(StaleProxyException exc)
-        {
-            throw new RuntimeException("Klaida sukuriant agentą.");
-        }
+        AgentContainer container = (AgentContainer)getContainerController();
+        AgentController AController = container.createNewAgent(agent_name, 
+                this.getClass().getPackage().getName() + "." + agent_name,
+                null);
+        AController.start();
+        return AController;
     }
 }
