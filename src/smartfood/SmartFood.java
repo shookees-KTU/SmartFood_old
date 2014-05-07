@@ -24,6 +24,7 @@
 package smartfood;
 
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
@@ -48,6 +49,7 @@ public class SmartFood extends Agent
      */
     protected void setup()
     {
+        //initial setup
         addBehaviour(new OneShotBehaviour(this)
         {
             @Override
@@ -66,6 +68,38 @@ public class SmartFood extends Agent
                     System.out.println(exc.getMessage());
                 }
             }
+        });
+        
+        //general purpose behaviour
+        addBehaviour(new CyclicBehaviour(this)
+        {
+
+            @Override
+            public void action()
+            {
+                //Yummly implementation
+                jade.lang.acl.ACLMessage msg = myAgent.receive();
+                if (msg != null)
+                {
+                    //gets name and removes the platform name
+                    String name = msg.getSender().getName();
+                    name = name.substring(0, name.indexOf("@"));
+                    switch(name)
+                    {
+                        case "Yummly":
+                            String content = msg.getContent();
+                            System.out.println("Received message from " + 
+                                            name + ": " + content);
+                            break;
+                        case "Communicator":
+                            break;
+                    }
+                }else
+                {
+                    
+                }
+            }
+            
         });
     }
     
