@@ -23,7 +23,6 @@
  */
 package smartfood;
 
-import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.wrapper.AgentContainer;
@@ -64,7 +63,7 @@ public class SmartFood extends Agent
                 }catch (StaleProxyException exc)
                 {
                     System.out.println("Error creating agents\n");
-                    exc.printStackTrace();
+                    System.out.println(exc.getMessage());
                 }
             }
         });
@@ -86,7 +85,7 @@ public class SmartFood extends Agent
     protected AgentController createAgent(String agent_name)
             throws StaleProxyException
     {
-        AgentContainer container = (AgentContainer)getContainerController();
+        AgentContainer container = getContainerController();
         AgentController AController = container.createNewAgent(agent_name, 
                 this.getClass().getPackage().getName() + "." + agent_name,
                 null);
