@@ -1,1 +1,1 @@
-( ap-description  :name "SmartFoodSystem" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://localhost.localdomain:7778/acc))))
+( ap-description  :name "Server" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://localhost.localdomain:7778/acc))))
