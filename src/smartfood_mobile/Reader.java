@@ -24,14 +24,42 @@
 
 package smartfood_mobile;
 
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.LuminanceSource;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.Result;
+import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
+import com.google.zxing.common.HybridBinarizer;
+import java.awt.image.BufferedImage;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
+
 /**
  *
  * @author Paulius Šukys
  */
 public class Reader 
 {
-    public Reader(String file)
+    public Reader(String file) throws FileNotFoundException, IOException
     {
-        
+        InputStream barCodeInputStream = new FileInputStream(file);
+        BufferedImage barCodeBufferedImage = ImageIO.read(barCodeInputStream);
+        LuminanceSource source = new BufferedImageLuminanceSource(barCodeBufferedImage);
+        MultiFormatReader barcodeReader = new MultiFormatReader();
+        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+        Result result;
+        String finalResult = "";
+        try
+        {
+            result = barcodeReader.decode(bitmap);
+            finalResult = String.valueOf(result.getText());
+        }catch (Exception e)
+        {
+            System.out.println("IM BAD");
+        }
+        System.out.println(finalResult);
     }
 }

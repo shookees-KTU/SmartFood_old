@@ -30,6 +30,10 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import smartfood_mobile.Reader;
 
 
 /**
@@ -63,10 +67,14 @@ public class SmartFood extends Agent
                     System.out.println("Created: " + yummly_agent.getName());
                     comm_agent = createAgent("Communicator");
                     System.out.println("Created: " + comm_agent.getName());
+                    Reader r = new Reader("file.png");
                 }catch (StaleProxyException exc)
                 {
                     System.out.println("Error creating agents\n");
                     System.out.println(exc.getMessage());
+                } catch (IOException ex)
+                {
+                    Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         });

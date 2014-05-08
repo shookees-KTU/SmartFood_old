@@ -46,7 +46,7 @@ public class Yummly extends Agent
            {
                System.out.println("I am " + getAID().getName());
                String ingredients[] = {"apple", "chocolate", "milk"};
-               List matched_recipes = wrapper.searchRecipe("pie", ingredients);
+               //List matched_recipes = wrapper.searchRecipe("pie", ingredients);
            }
         });
     }
