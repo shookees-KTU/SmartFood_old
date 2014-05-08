@@ -50,50 +50,63 @@ public class YummlyWrapper
         //exists to defeat instantiation
     }
     
-    public static String searchRecipe(String recipe)
+    public static String searchRecipe(String recipe, String[] allowedIngredients)
     {
         String query = "recipes?q=" + recipe;
+        
         try
         {
-            URL url = new URL(API_URL+query);
+            for (String ingredient: allowedIngredients)
+            {
+                query += "&allowedIngredient[]="; 
+                query += URLEncoder.encode(ingredient, "UTF-8");
+            }
+            
+        }catch(UnsupportedEncodingException exc)
+        {
+            System.out.println("Encoding error");
+            System.out.println(exc.getMessage());
+        }
+        return "";
+    }
+    
+    private static String getResponse(String query)
+    {
+        StringBuilder response = new StringBuilder();
+        try
+        {
+            URL url = new URL(query);
             HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("X-Yummly-App-ID", APP_ID);
             conn.setRequestProperty("X-Yummly-App-Key", APP_KEY);
-            
-            query += URLEncoder.encode(recipe, "UTF-8");
+
             String res = checkResponse(conn.getResponseCode());
-            
             if(!res.isEmpty())
             {
-                System.out.println(res);                   
+                System.out.println(res);  
             }else
             {
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                                                         conn.getInputStream()));
                 String inputLine;
-                StringBuffer response = new StringBuffer();
                 while ((inputLine = in.readLine()) != null)
                 {
                     response.append(inputLine);
                 }
                 in.close();
-                System.out.println(response);
             }
+            conn.disconnect();
         }catch(MalformedURLException exc)
         {
             System.out.println("Malformed URL:");
-            System.out.println(exc.getMessage());
-        }catch(UnsupportedEncodingException exc)
-        {
-            System.out.println("Encoding error");
             System.out.println(exc.getMessage());
         }catch(IOException exc)
         {
             System.out.println("IO error");
             System.out.println(exc.getMessage());
         }
-        return "";
+        return response.toString();
     }
     
     private static String checkResponse(int response)
