@@ -33,7 +33,7 @@ import jade.core.behaviours.OneShotBehaviour;
  */
 public class Yummly extends Agent
 {
-    YummlyWrapper wrapper = YummlyWrapper.getInstance();
+    private YummlyWrapper wrapper = new YummlyWrapper();
     @Override
     protected void setup()
     {
@@ -43,6 +43,7 @@ public class Yummly extends Agent
            public void action()
            {
                System.out.println("I am " + getAID().getName());
+               wrapper.searchRecipe("Apple");
            }
         });
     }

@@ -24,9 +24,13 @@
 
 package smartfood;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -36,47 +40,77 @@ import javax.net.ssl.HttpsURLConnection;
 public class YummlyWrapper 
 {
     //singleton since only one connection is needed
-    private static YummlyWrapper instance = null;
     
-    private static final String API_URL = "https://api.yummly.com/v1/api";
+    private static final String API_URL = "https://api.yummly.com/v1/api/";
     private static final String APP_ID = "1cf18976";
     private static final String APP_KEY = "59bc08e9d8e8d840454478fbca8ae959";
     
-    private static HttpsURLConnection conn;
-    
-    private YummlyWrapper()
+    YummlyWrapper()
     {
         //exists to defeat instantiation
     }
     
-    public static YummlyWrapper getInstance()
+    public static String searchRecipe(String recipe)
     {
-        if (instance == null)
-        {
-            setup();
-            instance = new YummlyWrapper();
-        }
-        return instance;
-    }
-    
-    private static void setup()
-    {
+        String query = "recipes?q=" + recipe;
         try
         {
-            URL url = new URL(API_URL);
+            URL url = new URL(API_URL+query);
             HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("X-Yummly-App-ID", APP_ID);
             conn.setRequestProperty("X-Yummly-App-Key", APP_KEY);
+            
+            query += URLEncoder.encode(recipe, "UTF-8");
+            String res = checkResponse(conn.getResponseCode());
+            
+            if(!res.isEmpty())
+            {
+                System.out.println(res);                   
+            }else
+            {
+                BufferedReader in = new BufferedReader(new InputStreamReader(
+                                                        conn.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = in.readLine()) != null)
+                {
+                    response.append(inputLine);
+                }
+                in.close();
+                System.out.println(response);
+            }
         }catch(MalformedURLException exc)
         {
             System.out.println("Malformed URL:");
             System.out.println(exc.getMessage());
+        }catch(UnsupportedEncodingException exc)
+        {
+            System.out.println("Encoding error");
+            System.out.println(exc.getMessage());
         }catch(IOException exc)
         {
-            System.out.println("IO error:");
+            System.out.println("IO error");
             System.out.println(exc.getMessage());
         }
+        return "";
     }
     
+    private static String checkResponse(int response)
+    {
+        String msg = "";
+        switch(response)
+        {
+            case 400:
+                msg = "Bad request";
+                break;
+            case 409:
+                msg = "API Rate Limit Exceeded";
+                break;
+            case 500:
+                msg = "Internal Server Error";
+                break;
+        }
+        return msg;
+    }
 }
