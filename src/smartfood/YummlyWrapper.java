@@ -31,7 +31,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import javax.net.ssl.HttpsURLConnection;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * A wrapper for Yummly
@@ -50,10 +57,10 @@ public class YummlyWrapper
         //exists to defeat instantiation
     }
     
-    public static String searchRecipe(String recipe, String[] allowedIngredients)
+    public static List searchRecipe(String recipe, String[] allowedIngredients)
     {
         String query = "recipes?q=" + recipe;
-        
+        List<Recipe> recipes = new ArrayList();
         try
         {
             for (String ingredient: allowedIngredients)
@@ -61,13 +68,52 @@ public class YummlyWrapper
                 query += "&allowedIngredient[]="; 
                 query += URLEncoder.encode(ingredient, "UTF-8");
             }
+            String response = getResponse(API_URL + query);
+            //since response is in json - parse it!
+            JSONParser jsonparser = new JSONParser();
+            JSONObject obj = (JSONObject)jsonparser.parse(response);
+            long matchCount = (long)obj.get("totalMatchCount");
+            //adding all matches to array
+            JSONArray matches = (JSONArray)obj.get("matches");
+            Iterator<JSONObject> iterator = matches.iterator();
+            
+            while (iterator.hasNext())
+            {
+                JSONObject match = iterator.next();
+                //setting up a Recipe object and appending to arraylist
+                Recipe r = new Recipe();
+                JSONObject flavors = (JSONObject)match.get("flavors");
+                if (flavors != null)
+                {
+                    r.addFlavor("salty", (double)flavors.get("salty"));
+                    r.addFlavor("meaty", (double)flavors.get("meaty"));
+                    r.addFlavor("sour", (double)flavors.get("sour"));
+                    r.addFlavor("sweet", (double)flavors.get("sweet"));
+                    r.addFlavor("bitter", (double)flavors.get("bitter"));
+                }
+                r.setRating((long)match.get("rating"));
+                r.setName((String)match.get("recipeName"));
+                r.setSource((String)match.get("sourceDisplayName"));
+                JSONArray ing = (JSONArray)match.get("ingredients");
+                Iterator<String> ii = ing.iterator();
+                while(ii.hasNext())
+                {
+                    r.addIngredient((String)ii.next());
+                }
+                r.setId((String)match.get("id"));
+                recipes.add(r);
+            }
             
         }catch(UnsupportedEncodingException exc)
         {
             System.out.println("Encoding error");
             System.out.println(exc.getMessage());
+        }catch(ParseException exc)
+        {
+            System.out.println("Parsing error");
+            System.out.println(exc.getMessage());
         }
-        return "";
+        return recipes;
     }
     
     private static String getResponse(String query)

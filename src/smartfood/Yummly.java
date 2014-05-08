@@ -26,6 +26,8 @@ package smartfood;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
+import java.util.Iterator;
+import java.util.List;
 /**
  * Yummly service communicator.
  * It serves for the SmartFood agent and communicates with Yummly to get data.
@@ -43,7 +45,8 @@ public class Yummly extends Agent
            public void action()
            {
                System.out.println("I am " + getAID().getName());
-               wrapper.searchRecipe("Apple");
+               String ingredients[] = {"apple", "chocolate", "milk"};
+               List matched_recipes = wrapper.searchRecipe("pie", ingredients);
            }
         });
     }
