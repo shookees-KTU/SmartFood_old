@@ -26,7 +26,6 @@ package smartfood;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-
 /**
  * Yummly service communicator.
  * It serves for the SmartFood agent and communicates with Yummly to get data.
@@ -34,6 +33,7 @@ import jade.core.behaviours.OneShotBehaviour;
  */
 public class Yummly extends Agent
 {
+    YummlyWrapper wrapper = YummlyWrapper.getInstance();
     @Override
     protected void setup()
     {

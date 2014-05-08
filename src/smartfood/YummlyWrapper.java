@@ -24,8 +24,10 @@
 
 package smartfood;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * A wrapper for Yummly
@@ -36,7 +38,11 @@ public class YummlyWrapper
     //singleton since only one connection is needed
     private static YummlyWrapper instance = null;
     
-    private static final String API_URL = "https://api.yummly.com/v1";
+    private static final String API_URL = "https://api.yummly.com/v1/api";
+    private static final String APP_ID = "1cf18976";
+    private static final String APP_KEY = "59bc08e9d8e8d840454478fbca8ae959";
+    
+    private static HttpsURLConnection conn;
     
     private YummlyWrapper()
     {
@@ -53,15 +59,24 @@ public class YummlyWrapper
         return instance;
     }
     
-    protected static void setup()
+    private static void setup()
     {
         try
         {
             URL url = new URL(API_URL);
-            
+            HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("X-Yummly-App-ID", APP_ID);
+            conn.setRequestProperty("X-Yummly-App-Key", APP_KEY);
         }catch(MalformedURLException exc)
         {
-            
+            System.out.println("Malformed URL:");
+            System.out.println(exc.getMessage());
+        }catch(IOException exc)
+        {
+            System.out.println("IO error:");
+            System.out.println(exc.getMessage());
         }
     }
+    
 }
