@@ -24,11 +24,20 @@
 
 package smartfood.mobile;
 
+import com.github.sarxos.webcam.WebcamPanel;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
@@ -39,6 +48,12 @@ import javax.swing.JTabbedPane;
 public class GUI extends JFrame
 {
     private static final long serialVersionUID = 1L;
+    private JTabbedPane tabbedPane;
+    private JComponent addPanel;
+    private JComponent remPanel;
+    private JComponent viePanel;
+    private final Cam c = new Cam();
+    private final Reader r = new Reader();
     public GUI()
     {
         setName("SmartFood");
@@ -55,18 +70,50 @@ public class GUI extends JFrame
      */
     private void initComponents()
     {
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         //add by webcam photo or text
-        JComponent addPanel = makePanel();
-        
+        addPanel = makePanel();
+        //webcam read start and display
+        JButton readBarcode_button = new JButton("Read barcode");
+        JLabel image_label = new JLabel(new ImageIcon());
+        readBarcode_button.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent ae)
+            {
+                Thread t = new Thread()
+                {
+                    public void run()
+                    {
+                        try
+                        {
+                            String barcode = r.readImage(c.takePicture());
+                            while (barcode.equals(""))
+                            {
+                                barcode = r.readImage(c.takePicture());
+                            }
+                            Logger.getLogger(GUI.class.getName()).info("Barcode: " + barcode);
+                        } catch (IOException ex)
+                        {
+                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                };
+                t.start();
+            }
+            
+        });
+        addPanel.add(readBarcode_button);
+        final WebcamPanel panel = c.getPanel(true, true);
+        addPanel.add(panel);
         tabbedPane.add("Add", addPanel);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
-        JComponent remPanel = makePanel();
+        remPanel = makePanel();
         tabbedPane.add("Remove", remPanel);
         tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
         
-        JComponent viePanel = makePanel();
+        viePanel = makePanel();
         tabbedPane.add("View products", viePanel);
         tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
         

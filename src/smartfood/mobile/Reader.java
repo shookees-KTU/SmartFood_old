@@ -41,7 +41,7 @@ import java.io.IOException;
  */
 public class Reader 
 {
-    public Reader(BufferedImage image) throws FileNotFoundException, IOException
+    public String readImage(BufferedImage image) throws FileNotFoundException, IOException
     {
         LuminanceSource source = new BufferedImageLuminanceSource(image);
         MultiFormatReader barcodeReader = new MultiFormatReader();
@@ -54,9 +54,8 @@ public class Reader
             finalResult = String.valueOf(result.getText());
         }catch (NotFoundException e)
         {
-            System.out.println("Not found!");
-            System.out.println(e);
+            //not needed
         }
-        System.out.println(finalResult);
+        return finalResult;
     }
 }

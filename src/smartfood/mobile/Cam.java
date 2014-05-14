@@ -24,8 +24,9 @@
 
 package smartfood.mobile;
 
-import java.awt.image.BufferedImage;
 import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamPanel;
+import java.awt.image.BufferedImage;
 /**
  *
  * @author Paulius Šukys
@@ -35,7 +36,19 @@ public class Cam
     public BufferedImage takePicture()
     {
         Webcam.setAutoOpenMode(true);
-        BufferedImage image = Webcam.getDefault().getImage();
+        BufferedImage image = getWebcam().getImage();
         return image;
+    }
+    
+    public WebcamPanel getPanel(boolean fps_display, boolean auto_start)
+    {
+        WebcamPanel panel = new WebcamPanel(getWebcam(), auto_start);
+        panel.setFPSDisplayed(fps_display);
+        return panel;
+    }
+    
+    private Webcam getWebcam()
+    {
+        return Webcam.getDefault();
     }
 }
