@@ -61,7 +61,8 @@ public class YummlyWrapper
     public static List searchRecipe(String recipe, String[] allowedIngredients)
     {
         String query = "recipes?q=" + recipe;
-        List<Recipe> recipes = new ArrayList();
+        List<Recipe> recipes;
+        recipes = new ArrayList();
         try
         {
             for (String ingredient: allowedIngredients)

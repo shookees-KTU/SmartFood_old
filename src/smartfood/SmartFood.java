@@ -57,6 +57,7 @@ public class SmartFood extends Agent
         //initial setup
         addBehaviour(new OneShotBehaviour(this)
         {
+            private static final long serialVersionUID = 1L;
             @Override
             public void action()
             {
@@ -78,6 +79,7 @@ public class SmartFood extends Agent
         //general purpose behaviour
         addBehaviour(new CyclicBehaviour(this)
         {
+            private static final long serialVersionUID = 1L;
 
             @Override
             public void action()

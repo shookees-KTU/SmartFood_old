@@ -26,8 +26,6 @@ package smartfood;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 /**
  * Yummly service communicator.
@@ -36,13 +34,15 @@ import java.util.logging.Logger;
  */
 public class Yummly extends Agent
 {
+    private static final long serialVersionUID = 1L;
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
-    private YummlyWrapper wrapper = new YummlyWrapper();
+    private final YummlyWrapper wrapper = new YummlyWrapper();
     @Override
     protected void setup()
     {
         addBehaviour(new OneShotBehaviour(this)
         {
+            private static final long serialVersionUID = 1L;
            @Override
            public void action()
            {
