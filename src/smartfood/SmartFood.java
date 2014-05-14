@@ -33,6 +33,7 @@ import jade.wrapper.StaleProxyException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import smartfood.mobile.GUI;
 
 
 /**
@@ -65,13 +66,15 @@ public class SmartFood extends Agent
                 try
                 {
                     yummly_agent = createAgent("Yummly");
-                    System.out.println("Created: " + yummly_agent.getName());
+                    logger.info("Created: " + yummly_agent.getName());
                     comm_agent = createAgent("Communicator");
-                    System.out.println("Created: " + comm_agent.getName());
+                    logger.info("Created: " + comm_agent.getName());
+                    GUI g = new GUI();
+                    logger.info("Started GUI");
                 }catch (StaleProxyException exc)
                 {
-                    System.out.println("Error creating agents\n");
-                    System.out.println(exc.getMessage());
+                    logger.log(Level.WARNING, "Error creating agents\n");
+                    logger.log(Level.WARNING, exc.getMessage());
                 }
             }
         });
@@ -95,7 +98,7 @@ public class SmartFood extends Agent
                     {
                         case "Yummly":
                             String content = msg.getContent();
-                            System.out.println("Received message from " + 
+                            logger.info("Received message from " + 
                                             name + ": " + content);
                             break;
                         case "Communicator":
@@ -113,7 +116,7 @@ public class SmartFood extends Agent
     @Override
     protected void takeDown()
     {
-        System.out.println("Agent "+ getAID().getName() + " terminating.");
+        logger.info("Agent "+ getAID().getName() + " terminating.");
     }
     
     /**

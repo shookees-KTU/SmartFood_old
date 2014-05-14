@@ -46,7 +46,7 @@ public class Communicator extends Agent
            @Override
            public void action()
            {
-               System.out.println("I am " + getAID().getName());
+               logger.info("I am " + getAID().getName());
            }
         });
     }
@@ -54,6 +54,6 @@ public class Communicator extends Agent
     @Override
     protected void takeDown()
     {
-        System.out.println("Agent "+ getAID().getName() + " terminating.");
+        logger.info("Agent "+ getAID().getName() + " terminating.");
     }
 }
