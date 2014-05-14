@@ -87,11 +87,16 @@ public class GUI extends JFrame
                     {
                         try
                         {
+                            final WebcamPanel panel = c.getPanel(true, true);
+                            addPanel.add(panel);
+                            pack();
                             String barcode = r.readImage(c.takePicture());
                             while (barcode.equals(""))
                             {
                                 barcode = r.readImage(c.takePicture());
                             }
+                            addPanel.remove(panel);
+                            pack();
                             Logger.getLogger(GUI.class.getName()).info("Barcode: " + barcode);
                         } catch (IOException ex)
                         {
@@ -104,8 +109,6 @@ public class GUI extends JFrame
             
         });
         addPanel.add(readBarcode_button);
-        final WebcamPanel panel = c.getPanel(true, true);
-        addPanel.add(panel);
         tabbedPane.add("Add", addPanel);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
