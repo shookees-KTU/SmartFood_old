@@ -1,0 +1,100 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    package com.github.sarxos.webcam;<a name="line.1"></a>
+<FONT color="green">002</FONT>    <a name="line.2"></a>
+<FONT color="green">003</FONT>    import java.util.EventObject;<a name="line.3"></a>
+<FONT color="green">004</FONT>    <a name="line.4"></a>
+<FONT color="green">005</FONT>    <a name="line.5"></a>
+<FONT color="green">006</FONT>    /**<a name="line.6"></a>
+<FONT color="green">007</FONT>     * Webcam detected motion event.<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     * @author Bartosz Firyn (SarXos)<a name="line.9"></a>
+<FONT color="green">010</FONT>     */<a name="line.10"></a>
+<FONT color="green">011</FONT>    public class WebcamMotionEvent extends EventObject {<a name="line.11"></a>
+<FONT color="green">012</FONT>    <a name="line.12"></a>
+<FONT color="green">013</FONT>            private static final long serialVersionUID = -7245768099221999443L;<a name="line.13"></a>
+<FONT color="green">014</FONT>    <a name="line.14"></a>
+<FONT color="green">015</FONT>            private int strength = 0;<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>            /**<a name="line.17"></a>
+<FONT color="green">018</FONT>             * Create detected motion event.<a name="line.18"></a>
+<FONT color="green">019</FONT>             * <a name="line.19"></a>
+<FONT color="green">020</FONT>             * @param detector<a name="line.20"></a>
+<FONT color="green">021</FONT>             * @param strength<a name="line.21"></a>
+<FONT color="green">022</FONT>             */<a name="line.22"></a>
+<FONT color="green">023</FONT>            public WebcamMotionEvent(WebcamMotionDetector detector, int strength) {<a name="line.23"></a>
+<FONT color="green">024</FONT>                    super(detector);<a name="line.24"></a>
+<FONT color="green">025</FONT>                    this.strength = strength;<a name="line.25"></a>
+<FONT color="green">026</FONT>            }<a name="line.26"></a>
+<FONT color="green">027</FONT>    <a name="line.27"></a>
+<FONT color="green">028</FONT>            /**<a name="line.28"></a>
+<FONT color="green">029</FONT>             * @return Motion strength<a name="line.29"></a>
+<FONT color="green">030</FONT>             */<a name="line.30"></a>
+<FONT color="green">031</FONT>            public int getStrength() {<a name="line.31"></a>
+<FONT color="green">032</FONT>                    return strength;<a name="line.32"></a>
+<FONT color="green">033</FONT>            }<a name="line.33"></a>
+<FONT color="green">034</FONT>    }<a name="line.34"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

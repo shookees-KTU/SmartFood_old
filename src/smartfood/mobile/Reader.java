@@ -32,11 +32,8 @@ import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import java.awt.image.BufferedImage;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import javax.imageio.ImageIO;
 
 /**
  *
@@ -44,12 +41,9 @@ import javax.imageio.ImageIO;
  */
 public class Reader 
 {
-    public Reader(String file) throws FileNotFoundException, IOException
+    public Reader(BufferedImage image) throws FileNotFoundException, IOException
     {
-        InputStream barCodeInputStream;
-        barCodeInputStream = new FileInputStream(file);
-        BufferedImage barCodeBufferedImage = ImageIO.read(barCodeInputStream);
-        LuminanceSource source = new BufferedImageLuminanceSource(barCodeBufferedImage);
+        LuminanceSource source = new BufferedImageLuminanceSource(image);
         MultiFormatReader barcodeReader = new MultiFormatReader();
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
         Result result;
@@ -61,7 +55,7 @@ public class Reader
         }catch (NotFoundException e)
         {
             System.out.println("Not found!");
-            System.out.println(e.getMessage());
+            System.out.println(e);
         }
         System.out.println(finalResult);
     }
