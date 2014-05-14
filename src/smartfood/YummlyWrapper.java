@@ -34,6 +34,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 import javax.net.ssl.HttpsURLConnection;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -47,7 +48,7 @@ import org.json.simple.parser.ParseException;
 public class YummlyWrapper 
 {
     //singleton since only one connection is needed
-    
+    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     private static final String API_URL = "https://api.yummly.com/v1/api/";
     private static final String APP_ID = "1cf18976";
     private static final String APP_KEY = "59bc08e9d8e8d840454478fbca8ae959";

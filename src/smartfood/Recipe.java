@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * A recipe object for retrieved Yummly request
@@ -36,6 +37,7 @@ import java.util.Map;
  */
 public class Recipe 
 {
+    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     private Map<String, Double> flavors;//flavor - 0..1 percentage
     private String name;
     private String source;

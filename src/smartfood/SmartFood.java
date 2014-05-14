@@ -43,6 +43,7 @@ import java.util.logging.Logger;
  */
 public class SmartFood extends Agent
 {
+    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     //Main-Container -> Server container
     private AgentController yummly_agent;
     private AgentController comm_agent;

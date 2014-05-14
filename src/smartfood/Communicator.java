@@ -26,19 +26,23 @@ package smartfood;
 
 import  jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
+import java.util.logging.Logger;
 
 /**
  * Communication agent between mobile and server containers.
- * This 
+ * In a simple context, it currently talks to another packet
  * @author Paulius Šukys
  */
 public class Communicator extends Agent
 {
+    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
+    private static final long serialVersionUID = 1L;
     @Override
     protected void setup()
     {
         addBehaviour(new OneShotBehaviour(this)
         {
+            private static final long serialVersionUID = 1L;
            @Override
            public void action()
            {

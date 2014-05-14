@@ -28,6 +28,7 @@ import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 /**
  * Yummly service communicator.
  * It serves for the SmartFood agent and communicates with Yummly to get data.
@@ -35,6 +36,7 @@ import java.util.List;
  */
 public class Yummly extends Agent
 {
+    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     private YummlyWrapper wrapper = new YummlyWrapper();
     @Override
     protected void setup()
