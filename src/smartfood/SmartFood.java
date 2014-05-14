@@ -33,7 +33,9 @@ import jade.wrapper.StaleProxyException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import smartfood.mobile.Cam;
 import smartfood.mobile.GUI;
+import smartfood.mobile.Reader;
 
 
 /**
@@ -71,6 +73,7 @@ public class SmartFood extends Agent
                     logger.info("Created: " + comm_agent.getName());
                     GUI g = new GUI();
                     logger.info("Started GUI");
+                    
                 }catch (StaleProxyException exc)
                 {
                     logger.log(Level.WARNING, "Error creating agents\n");

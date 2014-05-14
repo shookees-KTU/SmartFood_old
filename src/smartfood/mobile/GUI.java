@@ -56,7 +56,9 @@ public class GUI extends JFrame
     private void initComponents()
     {
         JTabbedPane tabbedPane = new JTabbedPane();
+        //add by webcam photo or text
         JComponent addPanel = makePanel();
+        
         tabbedPane.add("Add", addPanel);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
