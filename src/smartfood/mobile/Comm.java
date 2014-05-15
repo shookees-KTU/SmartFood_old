@@ -22,27 +22,32 @@
  * THE SOFTWARE.
  */
 
-package smartfood;
+package smartfood.mobile;
 
-import  jade.core.Agent;
+import jade.core.Agent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
+import jade.core.Runtime;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
+import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Communication agent between mobile and server containers.
- * In a simple context, it currently talks to another packet
- * @author Paulius Šukys
+ *
+ * @author 
  */
-public class Communicator extends Agent
+public class Comm extends Agent
 {
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
+    ContainerController cc;
     private static final long serialVersionUID = 1L;
+    
+    AgentController cam, reader;
+    
     @Override
     protected void setup()
     {
@@ -52,8 +57,14 @@ public class Communicator extends Agent
            @Override
            public void action()
            {
-               logger.info("I am " + getAID().getName());
-               initMobile();
+               System.out.println("IM ALIVE");
+               //creates his container
+               cc = getContainerController();
+               //Cam agent
+               //cam = createAgent("Cam");
+               //Reader agent
+               //reader = createAgent("Reader");
+               GUI g = new GUI();
            }
         });
     }
@@ -64,24 +75,21 @@ public class Communicator extends Agent
         logger.info("Agent "+ getAID().getName() + " terminating.");
     }
     
-    private void initMobile()
+    protected AgentController createAgent(String agent_name)
     {
-        //lazy way, since I don't have to run two separata processes
+        
+        AgentController AController = null;
         try
         {
-            jade.core.Runtime rt = jade.core.Runtime.instance();
-            jade.core.Profile p = new ProfileImpl();
-            p.setParameter(Profile.MAIN_HOST, "");
-            p.setParameter(Profile.MAIN_PORT, "");
-            p.setParameter(Profile.CONTAINER_NAME, "Mobile");
-            AgentContainer cc = rt.createAgentContainer(p);
-            AgentController mobile_comm = cc.createNewAgent("Comm", 
-                    "smartfood.mobile.Comm", null);
-            mobile_comm.start();
+            AController = cc.createNewAgent(agent_name, 
+                    this.getClass().getPackage().getName() + "." + agent_name,
+                    null);
+            AController.start();
         }catch(StaleProxyException exc)
         {
-            logger.log(Level.SEVERE, "Cannot init mobile agent");
+            logger.log(Level.SEVERE, "Problem creating new agent.");
             logger.log(Level.SEVERE, exc.getMessage());
         }
+        return AController;
     }
 }

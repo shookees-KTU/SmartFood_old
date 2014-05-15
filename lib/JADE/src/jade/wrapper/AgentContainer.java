@@ -75,4 +75,9 @@ public class AgentContainer extends ContainerController implements PlatformContr
 		myPlatformController.removePlatformListener(aListener);
 	}
 
+    public AgentController createNewAgent(String smartfoodmobileCommunicator, Object object)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

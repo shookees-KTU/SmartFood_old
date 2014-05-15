@@ -76,7 +76,6 @@ public class SmartFood extends Agent
                     logger.info("Created: " + yummly_agent.getName());
                     comm_agent = createAgent("Communicator");
                     logger.info("Created: " + comm_agent.getName());
-                    GUI g = new GUI();
                     logger.info("GUI started");
                     
                 }catch (StaleProxyException exc)
