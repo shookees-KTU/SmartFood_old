@@ -23,6 +23,10 @@
  */
 package smartfood;
 
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.MongoClient;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -30,12 +34,10 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
-import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import smartfood.mobile.Cam;
 import smartfood.mobile.GUI;
-import smartfood.mobile.Reader;
 
 
 /**
@@ -50,7 +52,8 @@ public class SmartFood extends Agent
     //Main-Container -> Server container
     private AgentController yummly_agent;
     private AgentController comm_agent;
-    
+    private MongoClient mongo;
+    private DB db;
     @Override
     /**
      * Includes agent initializations
@@ -63,21 +66,27 @@ public class SmartFood extends Agent
             private static final long serialVersionUID = 1L;
             @Override
             public void action()
-            {
-                System.out.println("I am " + getAID().getName());
+            {                
                 try
                 {
+                    mongo = new MongoClient("localhost");
+                    db = mongo.getDB("SmartFood");
+                    logger.info("Database binded");
                     yummly_agent = createAgent("Yummly");
                     logger.info("Created: " + yummly_agent.getName());
                     comm_agent = createAgent("Communicator");
                     logger.info("Created: " + comm_agent.getName());
                     GUI g = new GUI();
-                    logger.info("Started GUI");
+                    logger.info("GUI started");
                     
                 }catch (StaleProxyException exc)
                 {
-                    logger.log(Level.WARNING, "Error creating agents\n");
-                    logger.log(Level.WARNING, exc.getMessage());
+                    logger.log(Level.SEVERE, "Error creating agents\n");
+                    logger.log(Level.SEVERE, exc.getMessage());
+                } catch (UnknownHostException ex)
+                {
+                    logger.log(Level.SEVERE, "Error connecting to mongodb host");
+                    logger.log(Level.SEVERE, ex.getMessage());
                 }
             }
         });
@@ -138,5 +147,18 @@ public class SmartFood extends Agent
                 null);
         AController.start();
         return AController;
+    }
+    
+    public String[] getUsedProducts()
+    {
+        DBCollection product_collection  = db.getCollection("products");
+        DBCursor cursor = product_collection.find();
+        int product_count = (int)product_collection.getCount();
+        String[] products = new String[product_count];
+        for(int i = 0; i < product_count; i++)
+        {
+            products[i] = cursor.next().toString();
+        }
+        return products;
     }
 }
