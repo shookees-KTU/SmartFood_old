@@ -261,6 +261,11 @@ public class GUI extends JFrame
         JPanel panel = new JPanel(false);
         return panel;
     }
+
+    void notify(String content)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
 
 class SFTableModel extends AbstractTableModel
@@ -296,5 +301,14 @@ class SFTableModel extends AbstractTableModel
     public Class getColumnClass(int c)
     {
         return getValueAt(0, c).getClass();
+    }
+    
+    /**
+     * Notifies the user with a notification about something
+     * @param content notification text
+     */
+    public void notify(String content)
+    {
+        
     }
 }

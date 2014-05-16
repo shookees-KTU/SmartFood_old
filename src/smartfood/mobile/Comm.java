@@ -46,6 +46,7 @@ public class Comm extends Agent
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     private ContainerController cc;
     private static final long serialVersionUID = 1L;
+    private GUI gui;
     
     @Override
     protected void setup()
@@ -60,7 +61,7 @@ public class Comm extends Agent
                cc = getContainerController();
                 try
                 {
-                    GUI g = new GUI(cc);
+                    gui = new GUI(cc);
                 } catch (ControllerException ex)
                 {
                     Logger.getLogger(Comm.class.getName()).log(Level.SEVERE, null, ex);
@@ -74,7 +75,29 @@ public class Comm extends Agent
             @Override
             public void action()
             {
-                
+                String name, content;
+                ACLMessage msg = myAgent.receive();
+                if (msg != null)
+                {
+                    name = msg.getSender().getName();
+                    name = name.substring(0, name.indexOf("@"));
+                    if (name.equals("Communicator"))
+                    {
+                        switch(msg.getPerformative())
+                        {
+                            case ACLMessage.INFORM:
+                                logger.log(Level.INFO, "Server inform received, ID: " + msg.getConversationId());
+                                gui.notify(msg.getContent());
+                                break;
+                            case ACLMessage.REQUEST:
+                                logger.log(Level.INFO, "Server request received, ID: " + msg.getConversationId());
+                                break;
+                        }
+                    }else
+                    {
+                        logger.log(Level.WARNING, "A non serverish communicator message received.");
+                    }
+                }
             }
         });
     }
