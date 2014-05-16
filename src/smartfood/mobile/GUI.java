@@ -69,6 +69,8 @@ public class GUI extends JFrame
     private JComponent remPanel;
     private JComponent viePanel;
     private JComponent addPanel_controls;
+    private JButton readBarcode_button;
+    private JButton inputProduct_button;
     private JTable table;
     private JTextField text;
     private TableRowSorter<SFTableModel> sorter;
@@ -105,7 +107,7 @@ public class GUI extends JFrame
         addPanel_controls.setLayout(new BoxLayout(addPanel_controls, BoxLayout.PAGE_AXIS));
         
         //webcam read start and display
-        JButton readBarcode_button = new JButton("Read barcode");
+        readBarcode_button = new JButton("Read barcode");
         JLabel image_label = new JLabel(new ImageIcon());
         readBarcode_button.addActionListener(new ActionListener()
         {
@@ -119,6 +121,7 @@ public class GUI extends JFrame
                     {
                         try
                         {
+                            readBarcode_button.setEnabled(false);
                             final WebcamPanel panel = c.getPanel(true, true);
                             addPanel.add(panel);
                             pack();
@@ -128,8 +131,9 @@ public class GUI extends JFrame
                                 barcode = r.readImage(c.takePicture());
                             }
                             addPanel.remove(panel);
-                            pack();
                             Logger.getLogger(GUI.class.getName()).log(Level.INFO, "Barcode: {0}", barcode);
+                            readBarcode_button.setEnabled(true);
+                            pack();
                         } catch (IOException ex)
                         {
                             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -143,7 +147,7 @@ public class GUI extends JFrame
         addPanel_controls.add(readBarcode_button);
         
         //input box and result table
-        JButton inputProduct_button = new JButton("Input product");
+        inputProduct_button = new JButton("Input product");
         inputProduct_button.addActionListener(new ActionListener()
         {
 
@@ -155,6 +159,7 @@ public class GUI extends JFrame
                     @Override
                     public void run()
                     {
+                        inputProduct_button.setEnabled(false);
                         SFTableModel model = new SFTableModel();
                         sorter = new TableRowSorter<SFTableModel>(model);
                         table = new JTable(model);
@@ -214,6 +219,8 @@ public class GUI extends JFrame
                         });
                         addPanel_controls.add(text);
                         addPanel.add(scrollPane);
+                        //need to redefine the rightful choosing of an element
+                        //inputProduct_button.setEnabled(true);
                         pack();
                     }
                 };
