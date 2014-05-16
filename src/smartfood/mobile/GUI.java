@@ -75,8 +75,8 @@ public class GUI extends JFrame
     
     private final Cam c;
     private final Reader r;
-    private AgentController comm;
-    private ContainerController cc;
+    private final AgentController comm;
+    private final ContainerController cc;
     
     public GUI(ContainerController cc) throws ControllerException
     {
@@ -114,6 +114,7 @@ public class GUI extends JFrame
             {
                 Thread t = new Thread()
                 {
+                    @Override
                     public void run()
                     {
                         try
@@ -128,7 +129,7 @@ public class GUI extends JFrame
                             }
                             addPanel.remove(panel);
                             pack();
-                            Logger.getLogger(GUI.class.getName()).info("Barcode: " + barcode);
+                            Logger.getLogger(GUI.class.getName()).log(Level.INFO, "Barcode: {0}", barcode);
                         } catch (IOException ex)
                         {
                             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -151,6 +152,7 @@ public class GUI extends JFrame
             {
                 Thread t = new Thread()
                 {
+                    @Override
                     public void run()
                     {
                         SFTableModel model = new SFTableModel();
@@ -263,9 +265,10 @@ public class GUI extends JFrame
 
 class SFTableModel extends AbstractTableModel
 {
-    private String[] columNames = {"Product name"};
+    private static final long serialVersionUID = 1L;
+    private final String[] columNames = {"Product name"};
 
-    private String[] data = {"Vardas", "Pavarde", "Dar", "Du zodziai", "lietuvių"};
+    private final String[] data = {"Vardas", "Pavarde", "Dar", "Du zodziai", "lietuvių"};
     @Override
     public int getRowCount()
     {
@@ -278,6 +281,7 @@ class SFTableModel extends AbstractTableModel
         return columNames.length;
     }
     
+    @Override
     public String getColumnName(int col) 
     {
         return columNames[col];
@@ -288,6 +292,7 @@ class SFTableModel extends AbstractTableModel
         return data[i];
     }
     
+    @Override
     public Class getColumnClass(int c)
     {
         return getValueAt(0, c).getClass();

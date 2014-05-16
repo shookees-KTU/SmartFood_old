@@ -24,12 +24,11 @@
 
 package smartfood.mobile;
 
+import jade.core.AID;
 import jade.core.Agent;
-import jade.core.Profile;
-import jade.core.ProfileImpl;
-import jade.core.Runtime;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.wrapper.AgentContainer;
+import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.ControllerException;
@@ -43,11 +42,10 @@ import java.util.logging.Logger;
  */
 public class Comm extends Agent
 {
+    final AID server_comm = new AID("Communicator@SmartFoodSystem", true);
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
-    ContainerController cc;
+    private ContainerController cc;
     private static final long serialVersionUID = 1L;
-    
-    AgentController cam, reader;
     
     @Override
     protected void setup()
@@ -69,12 +67,22 @@ public class Comm extends Agent
                 }
            }
         });
+        //reading messages
+        addBehaviour(new CyclicBehaviour()
+        {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void action()
+            {
+                
+            }
+        });
     }
     
     @Override
     protected void takeDown()
     {
-        logger.info("Agent "+ getAID().getName() + " terminating.");
+        logger.log(Level.INFO, "Agent {0} terminating.", getAID().getName());
     }
     
     protected AgentController createAgent(String agent_name)
@@ -93,5 +101,39 @@ public class Comm extends Agent
             logger.log(Level.SEVERE, exc.getMessage());
         }
         return AController;
+    }
+    
+    /**
+     * Gets data from the main container
+     * @param dataName
+     * @return 
+     * @throws java.lang.InterruptedException 
+     */
+    public String getData(String dataName) throws InterruptedException
+    {
+        ACLMessage msg;
+        msg = new ACLMessage(ACLMessage.REQUEST);
+        msg.addReceiver(server_comm);
+        msg.setContent(dataName);
+        send(msg);
+        
+        msg = receive();
+        int waitTime = 10;//seconds
+        while(msg == null && waitTime != 0)
+        {
+            logger.info("Message sent to server communicator, waiting for response...");
+            Thread.sleep(1000);//1 second
+            waitTime -= 1;
+            msg = receive();
+        }
+        
+        if (msg == null)
+        {
+            logger.log(Level.SEVERE, "Waited for 10 seconds and no response!");
+            return "";
+        }else
+        {
+            return msg.getContent();
+        }
     }
 }
