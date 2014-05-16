@@ -32,6 +32,7 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
+import jade.wrapper.ControllerException;
 import jade.wrapper.StaleProxyException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,14 +58,15 @@ public class Comm extends Agent
            @Override
            public void action()
            {
-               System.out.println("IM ALIVE");
                //creates his container
                cc = getContainerController();
-               //Cam agent
-               //cam = createAgent("Cam");
-               //Reader agent
-               //reader = createAgent("Reader");
-               GUI g = new GUI();
+                try
+                {
+                    GUI g = new GUI(cc);
+                } catch (ControllerException ex)
+                {
+                    Logger.getLogger(Comm.class.getName()).log(Level.SEVERE, null, ex);
+                }
            }
         });
     }

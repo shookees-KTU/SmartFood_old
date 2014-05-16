@@ -25,6 +25,9 @@
 package smartfood.mobile;
 
 import com.github.sarxos.webcam.WebcamPanel;
+import jade.wrapper.AgentController;
+import jade.wrapper.ContainerController;
+import jade.wrapper.ControllerException;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -64,14 +68,22 @@ public class GUI extends JFrame
     private JComponent addPanel;
     private JComponent remPanel;
     private JComponent viePanel;
+    private JComponent addPanel_controls;
     private JTable table;
     private JTextField text;
     private TableRowSorter<SFTableModel> sorter;
-    private final Cam c = new Cam();
-    private final Reader r = new Reader();
     
-    public GUI()
+    private final Cam c;
+    private final Reader r;
+    private AgentController comm;
+    private ContainerController cc;
+    
+    public GUI(ContainerController cc) throws ControllerException
     {
+        c = new Cam();
+        r = new Reader();
+        this.cc = cc;
+        comm = cc.getAgent("Comm");
         setName("SmartFood");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(1, 1));
@@ -89,6 +101,9 @@ public class GUI extends JFrame
         tabbedPane = new JTabbedPane();
         //add by webcam photo or text
         addPanel = makePanel();
+        addPanel_controls = makePanel();
+        addPanel_controls.setLayout(new BoxLayout(addPanel_controls, BoxLayout.PAGE_AXIS));
+        
         //webcam read start and display
         JButton readBarcode_button = new JButton("Read barcode");
         JLabel image_label = new JLabel(new ImageIcon());
@@ -124,7 +139,7 @@ public class GUI extends JFrame
             }
             
         });
-        addPanel.add(readBarcode_button);
+        addPanel_controls.add(readBarcode_button);
         
         //input box and result table
         JButton inputProduct_button = new JButton("Input product");
@@ -195,7 +210,7 @@ public class GUI extends JFrame
                                 filterData();
                             }
                         });
-                        addPanel.add(text);
+                        addPanel_controls.add(text);
                         addPanel.add(scrollPane);
                         pack();
                     }
@@ -204,8 +219,8 @@ public class GUI extends JFrame
             }
             
         });
-        addPanel.add(inputProduct_button);
-        
+        addPanel_controls.add(inputProduct_button);
+        addPanel.add(addPanel_controls);
         tabbedPane.add("Add", addPanel);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
