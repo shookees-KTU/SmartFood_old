@@ -131,11 +131,15 @@ public class GUI extends JFrame
                                 barcode = r.readImage(c.takePicture());
                             }
                             addPanel.remove(panel);
+                            comm.addData("Product barcode", barcode);
                             Logger.getLogger(GUI.class.getName()).log(Level.INFO, "Barcode: {0}", barcode);
                             readBarcode_button.setEnabled(true);
                             inputProduct_button.setEnabled(true);
                             pack();
                         } catch (IOException ex)
+                        {
+                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (InterruptedException ex)
                         {
                             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
                         }
@@ -192,28 +196,31 @@ public class GUI extends JFrame
                         //search/add field
                         text = new JTextField();
                         text.setPreferredSize(new Dimension(80, 20));
-                        text.getDocument().addDocumentListener(
-                                new DocumentListener()
-                                {
-                                    
-                                    @Override
-                                    public void insertUpdate(DocumentEvent de)
+                        if (data != "")
+                        {
+                            text.getDocument().addDocumentListener(
+                                    new DocumentListener()
                                     {
-                                        filterData();
-                                    }
-                                    
-                                    @Override
-                                    public void removeUpdate(DocumentEvent de)
-                                    {
-                                        filterData();
-                                    }
-                                    
-                                    @Override
-                                    public void changedUpdate(DocumentEvent de)
-                                    {
-                                        filterData();
-                                    }
-                                });
+
+                                        @Override
+                                        public void insertUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+
+                                        @Override
+                                        public void removeUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+
+                                        @Override
+                                        public void changedUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+                                    });
+                        }
                         
                         //Add button
                         inputProduct_add = new JButton("Add");
@@ -226,14 +233,29 @@ public class GUI extends JFrame
                                 //should be some kind of definition binding to send data to Comm
                                 if (scrollPane != null && table.getSelectedRow() != -1)
                                 {
-                                    Logger.getLogger(GUI.class.getName()).log(
-                                            Level.INFO, "Selected " + 
-                                                    table.getSelectedRow());
+                                    try 
+                                    {
+                                        comm.addData("Product",
+                                          table.getValueAt(table.getSelectedColumn(), 0).toString());
+                                        Logger.getLogger(GUI.class.getName()).log(
+                                          Level.INFO, "Adding " +
+                                            table.getValueAt(table.getSelectedColumn(), 0).toString());
+                                    } catch (InterruptedException ex) 
+                                    {
+                                        Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
                                 }else
                                 {
-                                    Logger.getLogger(GUI.class.getName()).log(
-                                            Level.INFO, "Input " + 
-                                                    text.getText());
+                                    try
+                                    {
+                                        comm.addData("Product", text.getText());
+                                        Logger.getLogger(GUI.class.getName()).log(
+                                          Level.INFO, "Input " +
+                                            text.getText());
+                                    } catch (InterruptedException ex)
+                                    {
+                                        Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
                                 }
                                 inputProduct_button.setEnabled(true);
                                 readBarcode_button.setEnabled(true);

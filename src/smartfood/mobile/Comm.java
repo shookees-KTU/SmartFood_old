@@ -159,4 +159,13 @@ public class Comm extends Agent
             return msg.getContent();
         }
     }
+    
+    public void addData(String dataName, String dataValue) throws InterruptedException
+    {
+        ACLMessage msg;
+        msg = new ACLMessage(ACLMessage.INFORM);
+        msg.addReceiver(server_comm);
+        msg.setContent(dataName + ": " + dataValue);
+        send(msg);
+    }
 }
