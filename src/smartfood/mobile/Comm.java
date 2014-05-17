@@ -61,7 +61,7 @@ public class Comm extends Agent
                cc = getContainerController();
                 try
                 {
-                    gui = new GUI(cc);
+                    gui = new GUI((Comm)myAgent);
                 } catch (ControllerException ex)
                 {
                     Logger.getLogger(Comm.class.getName()).log(Level.SEVERE, null, ex);

@@ -25,15 +25,18 @@
 package smartfood.mobile;
 
 import com.github.sarxos.webcam.WebcamPanel;
-import jade.wrapper.AgentController;
-import jade.wrapper.ContainerController;
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import jade.core.Agent;
 import jade.wrapper.ControllerException;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
@@ -52,10 +55,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableRowSorter;
+import sun.misc.BASE64Decoder;
 
 /**
  *
@@ -79,15 +81,13 @@ public class GUI extends JFrame
     
     private final Cam c;
     private final Reader r;
-    private final AgentController comm;
-    private final ContainerController cc;
+    private final Comm comm;
     
-    public GUI(ContainerController cc) throws ControllerException
+    public GUI(Comm comm) throws ControllerException
     {
         c = new Cam();
         r = new Reader();
-        this.cc = cc;
-        comm = cc.getAgent("Comm");
+        this.comm = comm;
         setName("SmartFood");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(1, 1));
@@ -158,14 +158,27 @@ public class GUI extends JFrame
             @Override
             public void actionPerformed(ActionEvent ae)
             {
-                Thread t = new Thread()
+                Thread t;
+                t = new Thread()
                 {
                     @Override
                     public void run()
                     {
                         inputProduct_button.setEnabled(false);
                         readBarcode_button.setEnabled(false);
+                        //need to retrieve the list of used products
+                        //plan - get serialized String[] and unserialize it.
+                        //getProducts might be as well changedto getProducts
+                        String[] products;
+                        try
+                        {
+                            products = getProducts(comm.getData("products"));
+                        } catch (InterruptedException ex)
+                        {
+                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                         SFTableModel model = new SFTableModel();
+                        
                         sorter = new TableRowSorter<SFTableModel>(model);
                         table = new JTable(model);
                         table.setRowSorter(sorter);
@@ -178,27 +191,27 @@ public class GUI extends JFrame
                         text = new JTextField();
                         text.setPreferredSize(new Dimension(80, 20));
                         text.getDocument().addDocumentListener(
-                        new DocumentListener()
-                        {
-
-                            @Override
-                            public void insertUpdate(DocumentEvent de)
-                            {
-                                filterData();
-                            }
-
-                            @Override
-                            public void removeUpdate(DocumentEvent de)
-                            {
-                                filterData();
-                            }
-
-                            @Override
-                            public void changedUpdate(DocumentEvent de)
-                            {
-                                filterData();
-                            }
-                        });
+                                new DocumentListener()
+                                {
+                                    
+                                    @Override
+                                    public void insertUpdate(DocumentEvent de)
+                                    {
+                                        filterData();
+                                    }
+                                    
+                                    @Override
+                                    public void removeUpdate(DocumentEvent de)
+                                    {
+                                        filterData();
+                                    }
+                                    
+                                    @Override
+                                    public void changedUpdate(DocumentEvent de)
+                                    {
+                                        filterData();
+                                    }
+                                });
                         
                         //Add button
                         inputProduct_add = new JButton("Add");
@@ -208,6 +221,7 @@ public class GUI extends JFrame
                             @Override
                             public void actionPerformed(ActionEvent ae)
                             {
+                                //should be some kind of definition binding to send data to Comm
                                 if (table.getSelectedRow() != -1)
                                 {
                                     Logger.getLogger(GUI.class.getName()).log(
@@ -280,9 +294,37 @@ public class GUI extends JFrame
         return panel;
     }
 
-    void notify(String content)
+    /**
+     * Notifies the user with a notification about something
+     * @param content notification text
+     */
+    public void notify(String content)
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+    }
+    
+    /**
+     * Retrieves serialized base64 string and decodes and 
+     * de-serializes it into String array
+     * @param serString
+     * @return array of products as in strings
+     */
+    private String[] getProducts(String serString)
+    {
+        try
+        {
+            ByteArrayInputStream in;
+            in = new ByteArrayInputStream(Base64.decode(serString));
+            String[] ret = (String[]) new ObjectInputStream(in).readObject();
+            return ret;
+        } catch (IOException ex)
+        {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex)
+        {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 }
 
@@ -291,7 +333,7 @@ class SFTableModel extends AbstractTableModel
     private static final long serialVersionUID = 1L;
     private final String[] columNames = {"Product name"};
 
-    private final String[] data = {"Vardas", "Pavarde", "Dar", "Du zodziai", "lietuvių"};
+    private String[] data;
     @Override
     public int getRowCount()
     {
@@ -321,12 +363,8 @@ class SFTableModel extends AbstractTableModel
         return getValueAt(0, c).getClass();
     }
     
-    /**
-     * Notifies the user with a notification about something
-     * @param content notification text
-     */
-    public void notify(String content)
+    public void setData(String[] data)
     {
-        
+        this.data = data;
     }
 }
