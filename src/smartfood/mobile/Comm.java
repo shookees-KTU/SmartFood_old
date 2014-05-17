@@ -79,9 +79,9 @@ public class Comm extends Agent
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
+                    System.out.println("CYCLIC GOT DA MESSAGE");
                     name = msg.getSender().getName();
-                    name = name.substring(0, name.indexOf("@"));
-                    if (name.equals("Communicator"))
+                    if (name.equals("Communicator@SmartFoodSystem"))
                     {
                         switch(msg.getPerformative())
                         {
@@ -133,21 +133,20 @@ public class Comm extends Agent
         ACLMessage msg;
         msg = new ACLMessage(ACLMessage.REQUEST);
         msg.addReceiver(server_comm);
-        msg.setContent(dataName);
+        msg.setContent(dataName + ":all");
         send(msg);
         
-        msg = receive();
+        ACLMessage ret = receive();
         int waitTime = 10;//seconds
-        while(msg == null && waitTime != 0)
+        while(ret == null && waitTime != 0)
         {
             logger.info("Message sent to server communicator, waiting for response...");
             Thread.sleep(1000);//1 second
             waitTime -= 1;
-            msg = receive();
-            if (msg != null && msg.getPerformative() != ACLMessage.INFORM 
-                && msg.getContent().substring(0, msg.getContent().indexOf(":")) == dataName)
+            ret = receive();
+            if (ret != null && msg.getPerformative() != ACLMessage.INFORM)
             {
-                msg = null;//not the message we're waiting for
+                ret = null;//not the message we're waiting for
             }
         }
         

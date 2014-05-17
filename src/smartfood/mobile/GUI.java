@@ -235,7 +235,7 @@ public class GUI extends JFrame
                                 {
                                     try 
                                     {
-                                        comm.addData("Product",
+                                        comm.addData("product",
                                           table.getValueAt(table.getSelectedColumn(), 0).toString());
                                         Logger.getLogger(GUI.class.getName()).log(
                                           Level.INFO, "Adding " +
@@ -248,7 +248,7 @@ public class GUI extends JFrame
                                 {
                                     try
                                     {
-                                        comm.addData("Product", text.getText());
+                                        comm.addData("product", text.getText());
                                         Logger.getLogger(GUI.class.getName()).log(
                                           Level.INFO, "Input " +
                                             text.getText());

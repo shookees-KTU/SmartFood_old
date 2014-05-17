@@ -27,6 +27,8 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -34,10 +36,12 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import smartfood.mobile.GUI;
 
 
 /**
@@ -98,22 +102,45 @@ public class SmartFood extends Agent
             @Override
             public void action()
             {
-                //Yummly implementation
+                String content;
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
-                    //gets name and removes the platform name
-                    String name = msg.getSender().getName();
-                    name = name.substring(0, name.indexOf("@"));
-                    switch(name)
+                    try 
                     {
-                        case "Yummly":
-                            String content = msg.getContent();
-                            logger.info("Received message from " + 
-                                            name + ": " + content);
-                            break;
-                        case "Communicator":
-                            break;
+                        //gets name and removes the platform name
+                        String name = msg.getSender().getName();
+                        switch (name)
+                        {
+                            case "Yummly@SmartFoodSystem":
+                                content = msg.getContent();
+                                logger.info("Received message from " +
+                                        name + ": " + content);
+                                break;
+                            case "Communicator@SmartFoodSystem":
+                                content = msg.getContent();
+                                switch (content)
+                                {
+                                    case "products all":
+                                        String[] products = getUsedProducts();
+                                        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                                        ObjectOutputStream oout = new ObjectOutputStream(bout);
+                                        oout.writeObject(products);
+                                        oout.close();
+                                        String b64str = Base64.encode(bout.toByteArray());
+                                        //string is ready. send back
+                                        ACLMessage ret;
+                                        ret = new ACLMessage(ACLMessage.INFORM);
+                                        ret.addReceiver(new AID(name, true));
+                                        ret.setContent(b64str);
+                                        send(ret);
+                                        break;
+                                }
+                                break;
+                        }
+                    } catch (IOException ex) 
+                    {
+                        Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }else
                 {

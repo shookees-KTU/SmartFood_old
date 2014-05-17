@@ -24,10 +24,13 @@
 
 package smartfood;
 
+import jade.core.AID;
 import  jade.core.Agent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
@@ -43,6 +46,7 @@ public class Communicator extends Agent
 {
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     private static final long serialVersionUID = 1L;
+    private AID sf = new AID("SmartFood@SmartFoodSystem", true);
     @Override
     protected void setup()
     {
@@ -55,6 +59,78 @@ public class Communicator extends Agent
                logger.info("I am " + getAID().getName());
                initMobile();
            }
+        });
+        addBehaviour(new CyclicBehaviour(this)
+        {
+
+            @Override
+            public void action()
+            {
+                //reading ALL message received
+                String name, topic, request;
+                ACLMessage msg = myAgent.receive();
+                if (msg != null)
+                {
+                    name = msg.getSender().getName();
+                    switch(msg.getPerformative())
+                    {
+                        case ACLMessage.REQUEST:
+                            //incoming agents requesting some kind of service/data
+                            topic = msg.getContent().substring(0, msg.getContent().indexOf(":"));
+                            request = msg.getContent().substring(msg.getContent().indexOf(":")+1);
+                            switch(topic)
+                            {
+                                case "products":
+                                    //asking for the list of all products
+                                    ACLMessage tosf;
+                                    tosf = new ACLMessage(ACLMessage.REQUEST);
+                                    tosf.addReceiver(sf);
+                                    tosf.setContent(topic + " " + request);
+                                    send(tosf);
+                                    
+                                    ACLMessage sfmsg = receive();
+                                    int waitTime = 10;//seconds
+                                    while(sfmsg == null && waitTime != 0)
+                                    {
+                                        try
+                                        {
+                                            logger.info("Message sent to server communicator, waiting for response...");
+                                            Thread.sleep(1000);//1 second
+                                            waitTime -= 1;
+                                            sfmsg = receive();
+                                            if (sfmsg != null && sfmsg.getPerformative() != ACLMessage.INFORM)
+                                            {
+                                                sfmsg = null;//not the message we're waiting for
+                                            }
+                                        } catch (InterruptedException ex)
+                                        {
+                                            Logger.getLogger(Communicator.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
+                                    }
+                                    //sending back to sender
+                                    ACLMessage ret;
+                                    ret = new ACLMessage(ACLMessage.INFORM);
+                                    ret.addReceiver(new AID(name, true));
+                                    if (sfmsg == null)
+                                    {
+                                        logger.log(Level.SEVERE, "Waited for 10 seconds and no response!");
+                                        ret.setContent(sfmsg.getContent());
+                                    }else
+                                    {
+                                        ret.setContent("-");
+                                    }
+                                    System.out.println(ret.toString());
+                                    send(ret);
+                                    break;
+                            }
+                            break;
+                        case ACLMessage.INFORM:
+                            //retrieving data from mobile platform
+                            break;
+                    }
+                }
+            }
+            
         });
     }
     
