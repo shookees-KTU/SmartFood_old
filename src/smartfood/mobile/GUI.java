@@ -26,7 +26,6 @@ package smartfood.mobile;
 
 import com.github.sarxos.webcam.WebcamPanel;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-import jade.core.Agent;
 import jade.wrapper.ControllerException;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -36,7 +35,6 @@ import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
@@ -57,7 +55,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableRowSorter;
-import sun.misc.BASE64Decoder;
 
 /**
  *
@@ -170,22 +167,27 @@ public class GUI extends JFrame
                         //plan - get serialized String[] and unserialize it.
                         //getProducts might be as well changedto getProducts
                         String[] products;
+                        String data = "";
                         try
                         {
-                            products = getProducts(comm.getData("products"));
+                            data = comm.getData("products");
                         } catch (InterruptedException ex)
                         {
                             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                        SFTableModel model = new SFTableModel();
-                        
-                        sorter = new TableRowSorter<SFTableModel>(model);
-                        table = new JTable(model);
-                        table.setRowSorter(sorter);
-                        table.setFillsViewportHeight(true);
-                        //single selector
-                        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                        scrollPane = new JScrollPane(table);
+                        if(data != "")
+                        {
+                            products = getProducts(data);
+                            SFTableModel model = new SFTableModel();
+
+                            sorter = new TableRowSorter<SFTableModel>(model);
+                            table = new JTable(model);
+                            table.setRowSorter(sorter);
+                            table.setFillsViewportHeight(true);
+                            //single selector
+                            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                            scrollPane = new JScrollPane(table);
+                        }
                         
                         //search/add field
                         text = new JTextField();
@@ -222,7 +224,7 @@ public class GUI extends JFrame
                             public void actionPerformed(ActionEvent ae)
                             {
                                 //should be some kind of definition binding to send data to Comm
-                                if (table.getSelectedRow() != -1)
+                                if (scrollPane != null && table.getSelectedRow() != -1)
                                 {
                                     Logger.getLogger(GUI.class.getName()).log(
                                             Level.INFO, "Selected " + 
@@ -237,14 +239,20 @@ public class GUI extends JFrame
                                 readBarcode_button.setEnabled(true);
                                 addPanel_controls.remove(text);
                                 addPanel_controls.remove(inputProduct_add);
-                                addPanel.remove(scrollPane);
+                                if (scrollPane != null)
+                                {
+                                    addPanel.remove(scrollPane);
+                                }
                                 pack();
                             }
                             
                         });
                         addPanel_controls.add(text);
                         addPanel_controls.add(inputProduct_add);
-                        addPanel.add(scrollPane);
+                        if (scrollPane != null)
+                        {
+                            addPanel.add(scrollPane);
+                        }
                         //need to redefine the rightful choosing of an element
                         pack();
                     }
@@ -313,6 +321,10 @@ public class GUI extends JFrame
     {
         try
         {
+            if (serString == "")
+            {
+                return new String[0];
+            }
             ByteArrayInputStream in;
             in = new ByteArrayInputStream(Base64.decode(serString));
             String[] ret = (String[]) new ObjectInputStream(in).readObject();
