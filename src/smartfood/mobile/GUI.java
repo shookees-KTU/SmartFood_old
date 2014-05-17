@@ -73,6 +73,8 @@ public class GUI extends JFrame
     private JButton inputProduct_button;
     private JTable table;
     private JTextField text;
+    private JScrollPane scrollPane;
+    private JButton inputProduct_add;
     private TableRowSorter<SFTableModel> sorter;
     
     private final Cam c;
@@ -122,6 +124,7 @@ public class GUI extends JFrame
                         try
                         {
                             readBarcode_button.setEnabled(false);
+                            inputProduct_button.setEnabled(false);
                             final WebcamPanel panel = c.getPanel(true, true);
                             addPanel.add(panel);
                             pack();
@@ -133,6 +136,7 @@ public class GUI extends JFrame
                             addPanel.remove(panel);
                             Logger.getLogger(GUI.class.getName()).log(Level.INFO, "Barcode: {0}", barcode);
                             readBarcode_button.setEnabled(true);
+                            inputProduct_button.setEnabled(true);
                             pack();
                         } catch (IOException ex)
                         {
@@ -160,39 +164,17 @@ public class GUI extends JFrame
                     public void run()
                     {
                         inputProduct_button.setEnabled(false);
+                        readBarcode_button.setEnabled(false);
                         SFTableModel model = new SFTableModel();
                         sorter = new TableRowSorter<SFTableModel>(model);
                         table = new JTable(model);
                         table.setRowSorter(sorter);
                         table.setFillsViewportHeight(true);
-                        
                         //single selector
                         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                        scrollPane = new JScrollPane(table);
                         
-                        //when selection changes provide user with row numbers  for both view and model
-                        table.getSelectionModel().addListSelectionListener(
-                            new ListSelectionListener()
-                            {
-
-                                @Override
-                                public void valueChanged(ListSelectionEvent lse)
-                                {
-                                    int viewRow = table.getSelectedRow();
-                                    if (viewRow < 0)
-                                    {
-                                        Logger.getLogger(GUI.class.getName()).info("viewRow < 0");
-                                    }else
-                                    {
-                                        int modelRow = 
-                                          table.convertRowIndexToModel(viewRow);
-                                        Logger.getLogger(GUI.class.getName()).info("Selected row in view: " + viewRow + "; Selected row in model: " + modelRow);
-                                    }
-                                }
-                            });
-                        
-                        JScrollPane scrollPane = new JScrollPane(table);
-                        
-                        
+                        //search/add field
                         text = new JTextField();
                         text.setPreferredSize(new Dimension(80, 20));
                         text.getDocument().addDocumentListener(
@@ -217,10 +199,39 @@ public class GUI extends JFrame
                                 filterData();
                             }
                         });
+                        
+                        //Add button
+                        inputProduct_add = new JButton("Add");
+                        inputProduct_add.addActionListener(new ActionListener()
+                        {
+
+                            @Override
+                            public void actionPerformed(ActionEvent ae)
+                            {
+                                if (table.getSelectedRow() != -1)
+                                {
+                                    Logger.getLogger(GUI.class.getName()).log(
+                                            Level.INFO, "Selected " + 
+                                                    table.getSelectedRow());
+                                }else
+                                {
+                                    Logger.getLogger(GUI.class.getName()).log(
+                                            Level.INFO, "Input " + 
+                                                    text.getText());
+                                }
+                                inputProduct_button.setEnabled(true);
+                                readBarcode_button.setEnabled(true);
+                                addPanel_controls.remove(text);
+                                addPanel_controls.remove(inputProduct_add);
+                                addPanel.remove(scrollPane);
+                                pack();
+                            }
+                            
+                        });
                         addPanel_controls.add(text);
+                        addPanel_controls.add(inputProduct_add);
                         addPanel.add(scrollPane);
                         //need to redefine the rightful choosing of an element
-                        //inputProduct_button.setEnabled(true);
                         pack();
                     }
                 };
