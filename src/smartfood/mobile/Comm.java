@@ -85,10 +85,6 @@ public class Comm extends Agent
                     {
                         switch(msg.getPerformative())
                         {
-                            case ACLMessage.INFORM:
-                                logger.log(Level.INFO, "Server inform received, ID: " + msg.getConversationId());
-                                gui.notify(msg.getContent());
-                                break;
                             case ACLMessage.REQUEST:
                                 logger.log(Level.INFO, "Server request received, ID: " + msg.getConversationId());
                                 break;
@@ -148,6 +144,11 @@ public class Comm extends Agent
             Thread.sleep(1000);//1 second
             waitTime -= 1;
             msg = receive();
+            if (msg != null && msg.getPerformative() != ACLMessage.INFORM 
+                && msg.getContent().substring(0, msg.getContent().indexOf(":")) == dataName)
+            {
+                msg = null;//not the message we're waiting for
+            }
         }
         
         if (msg == null)
