@@ -26,6 +26,7 @@ package smartfood;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 /**
  * Yummly service communicator.
@@ -46,7 +47,7 @@ public class Yummly extends Agent
            @Override
            public void action()
            {
-               logger.info("I am " + getAID().getName());
+               logger.log(Level.INFO, "I am {0}", getAID().getName());
                String ingredients[] = {"apple", "chocolate", "milk"};
                //List matched_recipes = wrapper.searchRecipe("pie", ingredients);
            }
@@ -56,6 +57,6 @@ public class Yummly extends Agent
     @Override
     protected void takeDown()
     {
-        logger.info("Agent "+ getAID().getName() + " terminating.");
+        logger.log(Level.INFO, "Agent {0} terminating.", getAID().getName());
     }
 }
