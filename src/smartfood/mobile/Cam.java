@@ -28,11 +28,16 @@ import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamPanel;
 import java.awt.image.BufferedImage;
 /**
- *
+ * A general use class for interacting with a webcam.
+ * Using sarxos.webcam lib
  * @author Paulius Šukys
  */
 public class Cam 
 {
+    /**
+     * Takes a single picture
+     * @return picture
+     */
     public BufferedImage takePicture()
     {
         Webcam.setAutoOpenMode(true);
@@ -40,6 +45,12 @@ public class Cam
         return image;
     }
     
+    /**
+     * Gets a view panel for webcam
+     * @param fps_display display frames per second
+     * @param auto_start automatically start the webcam
+     * @return view panel for webcam
+     */
     public WebcamPanel getPanel(boolean fps_display, boolean auto_start)
     {
         WebcamPanel panel = new WebcamPanel(getWebcam(), auto_start);
@@ -47,6 +58,10 @@ public class Cam
         return panel;
     }
     
+    /**
+     * somewhat oop to return webcam
+     * @return webcam
+     */
     private Webcam getWebcam()
     {
         return Webcam.getDefault();
