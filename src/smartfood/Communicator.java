@@ -34,7 +34,10 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.logging.Level;
+//apparently Logger is not such a good package, is it?
 import java.util.logging.Logger;
 
 /**
@@ -46,20 +49,23 @@ public class Communicator extends Agent
 {
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     private static final long serialVersionUID = 1L;
-    private AID sf = new AID("SmartFood@SmartFoodSystem", true);
+    private final AID sf_aid = new AID("SmartFood@SmartFoodSystem", true);
     @Override
     protected void setup()
     {
+        //apparently this is bad practice
+        /**basic initiation*/
         addBehaviour(new OneShotBehaviour(this)
         {
             private static final long serialVersionUID = 1L;
            @Override
            public void action()
            {
-               logger.info("I am " + getAID().getName());
                initMobile();
+               logger.log(Level.INFO, "{0} initiated", getAID().getName());
            }
         });
+        
         addBehaviour(new CyclicBehaviour(this)
         {
 
@@ -67,60 +73,32 @@ public class Communicator extends Agent
             public void action()
             {
                 //reading ALL message received
-                String name, topic, request;
+                String sender_name, msg_topic, msg_request;
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
-                    name = msg.getSender().getName();
+                    sender_name = msg.getSender().getName();
                     switch(msg.getPerformative())
                     {
                         case ACLMessage.REQUEST:
                             //incoming agents requesting some kind of service/data
-                            topic = msg.getContent().substring(0, msg.getContent().indexOf(":"));
-                            request = msg.getContent().substring(msg.getContent().indexOf(":")+1);
-                            switch(topic)
+                            msg_topic = msg.getContent().substring(0, msg.getContent().indexOf(":"));
+                            msg_request = msg.getContent().substring(msg.getContent().indexOf(":")+1);
+                            switch(msg_topic)
                             {
                                 case "products":
                                     //asking for the list of all products
-                                    ACLMessage tosf;
-                                    tosf = new ACLMessage(ACLMessage.REQUEST);
-                                    tosf.addReceiver(sf);
-                                    tosf.setContent(topic + " " + request);
-                                    send(tosf);
+                                    sendMessage(sf_aid.getName(), msg_topic + " " + msg_request, ACLMessage.REQUEST, msg.getOntology());
                                     
-                                    ACLMessage sfmsg = receive();
-                                    int waitTime = 10;//seconds
-                                    while(sfmsg == null && waitTime != 0)
-                                    {
-                                        try
-                                        {
-                                            logger.info("Message sent to server communicator, waiting for response...");
-                                            Thread.sleep(1000);//1 second
-                                            waitTime -= 1;
-                                            sfmsg = receive();
-                                            if (sfmsg != null && sfmsg.getPerformative() != ACLMessage.INFORM)
-                                            {
-                                                sfmsg = null;//not the message we're waiting for
-                                            }
-                                        } catch (InterruptedException ex)
-                                        {
-                                            Logger.getLogger(Communicator.class.getName()).log(Level.SEVERE, null, ex);
-                                        }
-                                    }
-                                    //sending back to sender
-                                    ACLMessage ret;
-                                    ret = new ACLMessage(ACLMessage.INFORM);
-                                    ret.addReceiver(new AID(name, true));
-                                    if (sfmsg == null)
-                                    {
-                                        logger.log(Level.SEVERE, "Waited for 10 seconds and no response!");
-                                        ret.setContent(sfmsg.getContent());
-                                    }else
-                                    {
-                                        ret.setContent("-");
-                                    }
-                                    System.out.println(ret.toString());
-                                    send(ret);
+                                    //TODO: add asynchronized version
+                                    String return_content = waitForMessage(ACLMessage.INFORM, 
+                                            msg.getOntology());
+                                    //return back the message
+                                    sendMessage(sender_name, return_content, 
+                                            ACLMessage.INFORM, msg.getOntology());
+                                    break;
+                                default:
+                                    logger.log(Level.WARNING, "Unknown message topic received");
                                     break;
                             }
                             break;
@@ -137,12 +115,15 @@ public class Communicator extends Agent
     @Override
     protected void takeDown()
     {
-        logger.info("Agent "+ getAID().getName() + " terminating.");
+        logger.log(Level.INFO, "Agent {0} terminating.", getAID().getName());
     }
     
+    /**
+     * A workaround for running two containers in one process
+     * It is crucial, that the mobile containers is set up correctly
+     */
     private void initMobile()
     {
-        //lazy way, since I don't have to run two separata processes
         try
         {
             jade.core.Runtime rt = jade.core.Runtime.instance();
@@ -156,8 +137,66 @@ public class Communicator extends Agent
             mobile_comm.start();
         }catch(StaleProxyException exc)
         {
-            logger.log(Level.SEVERE, "Cannot init mobile agent");
             logger.log(Level.SEVERE, exc.getMessage());
+            throw new RuntimeException("Cannot init mobile agent");
+        }
+    }
+    
+    /**
+     * Sends a message to agent
+     * 
+     * @param to agent GUID name
+     * @param content content to be sent
+     * @param performative performative level
+     */
+    private void sendMessage(String to, String content, int performative, String ontology)
+    {
+        ACLMessage msg;
+        msg = new ACLMessage(performative);
+        msg.addReceiver(new AID(to, true));
+        msg.setOntology(ontology);
+        msg.setContent(content);
+        send(msg);
+    }
+    /**
+     * Waits for the message to return of specific performative and ontology
+     * 
+     * @param performative message's performative
+     * @param ontology message's ontology
+     * @return String content
+     */
+    private String waitForMessage(int performative, String ontology)
+    {
+        ACLMessage msg = receive();
+        int waitTime = 10;//seconds
+        
+        //using the time comparisson method rather than Thread.sleep()
+        Calendar current_time = Calendar.getInstance();
+        current_time.setTime(new Date());
+        Calendar wait_time = Calendar.getInstance();
+        wait_time.setTime(new Date());
+        wait_time.add(Calendar.SECOND, waitTime);
+        
+        while(msg == null &&
+                current_time.get(Calendar.SECOND) !=
+                wait_time.get(Calendar.SECOND))
+        {
+            msg = receive();
+            if (msg != null)
+            {
+                if (msg.getPerformative() != performative ||
+                        !msg.getOntology().equals(ontology)) {
+                    msg = null;//not the message we're waiting for
+                }
+            }
+        }
+        if (msg != null)
+        {
+            return msg.getContent();
+        }else
+        {
+            logger.log(Level.SEVERE, "Waited for 10 seconds and no response!");
+            return "-";
         }
     }
 }
