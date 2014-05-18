@@ -34,6 +34,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.HttpsURLConnection;
 import org.json.simple.JSONArray;
@@ -47,41 +48,38 @@ import org.json.simple.parser.ParseException;
  */
 public class YummlyWrapper 
 {
-    //singleton since only one connection is needed
-    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
-    private static final String API_URL = "https://api.yummly.com/v1/api/";
-    private static final String APP_ID = "1cf18976";
-    private static final String APP_KEY = "59bc08e9d8e8d840454478fbca8ae959";
+    private final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
+    private final static String API_URL = "https://api.yummly.com/v1/api/";
+    private final static String APP_ID = "1cf18976";
+    private final static String APP_KEY = "59bc08e9d8e8d840454478fbca8ae959";
     
     YummlyWrapper()
     {
         //exists to defeat instantiation
     }
     
-    public static List searchRecipe(String recipe, String[] allowedIngredients)
+    /**
+     * Searches for a recipe and returns a list of recipes
+     * @param recipe recipe name
+     * @param allowedIngredients list of allowed ingredients
+     * @return list of found recipes
+     */
+    public List searchRecipe(String recipe, String[] allowedIngredients)
     {
         String query = "recipes?q=" + recipe;
         List<Recipe> recipes;
         recipes = new ArrayList();
         try
         {
-            for (String ingredient: allowedIngredients)
-            {
-                query += "&allowedIngredient[]="; 
-                query += URLEncoder.encode(ingredient, "UTF-8");
-            }
+            query += getAllowedIngredients(allowedIngredients);
+            
             String response = getResponse(API_URL + query);
-            //since response is in json - parse it!
-            JSONParser jsonparser = new JSONParser();
-            JSONObject obj = (JSONObject)jsonparser.parse(response);
-            long matchCount = (long)obj.get("totalMatchCount");
-            //adding all matches to array
-            JSONArray matches = (JSONArray)obj.get("matches");
-            Iterator<JSONObject> iterator = matches.iterator();
+            Iterator<JSONObject> iterator = getJSONmatchArray(response, "matches");
             
             while (iterator.hasNext())
             {
                 JSONObject match = iterator.next();
+                
                 //setting up a Recipe object and appending to arraylist
                 Recipe r = new Recipe();
                 JSONObject flavors = (JSONObject)match.get("flavors");
@@ -100,7 +98,7 @@ public class YummlyWrapper
                 Iterator<String> ii = ing.iterator();
                 while(ii.hasNext())
                 {
-                    r.addIngredient((String)ii.next());
+                    r.addIngredient(ii.next());
                 }
                 r.setId((String)match.get("id"));
                 recipes.add(r);
@@ -108,17 +106,13 @@ public class YummlyWrapper
             
         }catch(UnsupportedEncodingException exc)
         {
-            System.out.println("Encoding error");
-            System.out.println(exc.getMessage());
-        }catch(ParseException exc)
-        {
-            System.out.println("Parsing error");
-            System.out.println(exc.getMessage());
+            logger.log(Level.SEVERE, "Encoding error");
+            logger.log(Level.SEVERE, exc.getMessage());
         }
         return recipes;
     }
     
-    private static String getResponse(String query)
+    private String getResponse(String query)
     {
         StringBuilder response = new StringBuilder();
         try
@@ -135,29 +129,31 @@ public class YummlyWrapper
                 System.out.println(res);  
             }else
             {
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                                                        conn.getInputStream()));
-                String inputLine;
-                while ((inputLine = in.readLine()) != null)
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                        conn.getInputStream())))
                 {
-                    response.append(inputLine);
+                    String inputLine = in.readLine();
+                    while (inputLine != null)
+                    {
+                        response.append(inputLine);
+                        inputLine =in.readLine();
+                    }
                 }
-                in.close();
             }
             conn.disconnect();
         }catch(MalformedURLException exc)
         {
-            System.out.println("Malformed URL:");
-            System.out.println(exc.getMessage());
+            logger.log(Level.SEVERE, "Malformed URL:");
+            logger.log(Level.SEVERE, exc.getMessage());
         }catch(IOException exc)
         {
-            System.out.println("IO error");
-            System.out.println(exc.getMessage());
+            logger.log(Level.SEVERE, "IO error");
+            logger.log(Level.SEVERE, exc.getMessage());
         }
         return response.toString();
     }
     
-    private static String checkResponse(int response)
+    private String checkResponse(int response)
     {
         String msg = "";
         switch(response)
@@ -171,7 +167,50 @@ public class YummlyWrapper
             case 500:
                 msg = "Internal Server Error";
                 break;
+            default:
+                msg = "Unknown error";
+                break;
         }
         return msg;
+    }
+    
+    /**
+     * Simply a method to make a query string for GET request
+     * @param ingredients String array of ingredients
+     * @return query string for GET request part
+     */
+    private String getAllowedIngredients(String[] ingredients) throws UnsupportedEncodingException
+    {
+        String query = "";
+        for (String ingredient: ingredients)
+            {
+                query += "&allowedIngredient[]="; 
+                query += URLEncoder.encode(ingredient, "UTF-8");
+            }
+        return query;
+    }
+    
+    /**
+     * Parses JSON into found queried objects iterator
+     * @param content string to parse as json
+     * @param query text to match in json
+     * @return iterator for jsonarray
+     */
+    private Iterator<JSONObject> getJSONmatchArray(String content, String query)
+    {
+        try
+        {
+            //since response is in json - parse it!
+            JSONParser jsonparser = new JSONParser();
+            JSONObject obj = (JSONObject)jsonparser.parse(content);
+            //adding all matches to array
+            JSONArray matches = (JSONArray)obj.get(query);
+            return matches.iterator();
+        } catch (ParseException ex)
+        {
+            logger.log(Level.SEVERE, "Error while parsing JSON");
+            logger.log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 }
