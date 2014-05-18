@@ -63,13 +63,15 @@ import javax.swing.table.TableRowSorter;
 public class GUI extends JFrame
 {
     private static final long serialVersionUID = 1L;
+    private final Logger logger = Logger.getLogger(GUI.class.getName());
     private JTabbedPane tabbedPane;
-    private JComponent addPanel;
+    private JComponent add_panel;
     private JComponent remPanel;
     private JComponent viePanel;
     private JComponent addPanel_controls;
     private JButton readBarcode_button;
     private JButton inputProduct_button;
+    private SFTableModel model;
     private JTable table;
     private JTextField text;
     private JScrollPane scrollPane;
@@ -101,7 +103,7 @@ public class GUI extends JFrame
     {
         tabbedPane = new JTabbedPane();
         //add by webcam photo or text
-        addPanel = makePanel();
+        add_panel = makePanel();
         addPanel_controls = makePanel();
         addPanel_controls.setLayout(new BoxLayout(addPanel_controls, BoxLayout.PAGE_AXIS));
         
@@ -113,35 +115,29 @@ public class GUI extends JFrame
             @Override
             public void actionPerformed(ActionEvent ae)
             {
-                Thread t = new Thread()
+                Thread t;
+                t = new Thread()
                 {
                     @Override
                     public void run()
                     {
                         try
                         {
-                            readBarcode_button.setEnabled(false);
-                            inputProduct_button.setEnabled(false);
-                            final WebcamPanel panel = c.getPanel(true, true);
-                            addPanel.add(panel);
+                            enableAddPanelControls(false);
+                            final WebcamPanel webcam_panel = c.getPanel(true, true);
+                            
+                            add_panel.add(webcam_panel);
                             pack();
-                            String barcode = r.readImage(c.takePicture());
-                            while (barcode.equals(""))
-                            {
-                                barcode = r.readImage(c.takePicture());
-                            }
-                            addPanel.remove(panel);
+                            
+                            String barcode = retrieveBarcode();
+                            add_panel.remove(webcam_panel);
+                            
                             comm.addData("Product barcode", barcode);
-                            Logger.getLogger(GUI.class.getName()).log(Level.INFO, "Barcode: {0}", barcode);
-                            readBarcode_button.setEnabled(true);
-                            inputProduct_button.setEnabled(true);
+                            enableAddPanelControls(true);
                             pack();
-                        } catch (IOException ex)
-                        {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
                         } catch (InterruptedException ex)
                         {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                            logger.log(Level.SEVERE, null, ex);
                         }
                     }
                 };
@@ -165,8 +161,7 @@ public class GUI extends JFrame
                     @Override
                     public void run()
                     {
-                        inputProduct_button.setEnabled(false);
-                        readBarcode_button.setEnabled(false);
+                        enableAddPanelControls(false);
                         //need to retrieve the list of used products
                         //plan - get serialized String[] and unserialize it.
                         //getProducts might be as well changedto getProducts
@@ -177,27 +172,27 @@ public class GUI extends JFrame
                             data = comm.getData("products");
                         } catch (InterruptedException ex)
                         {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                            logger.log(Level.SEVERE, null, ex);
                         }
-                        if(data != "")
+                        
+                        //search/add field
+                        text = new JTextField();
+                        text.setPreferredSize(new Dimension(80, 20));
+                        //live search on table (if there are any :) )
+                        System.out.println(data);
+                        if (!"".equals(data))
                         {
                             products = getProducts(data);
-                            SFTableModel model = new SFTableModel();
+                            model = new SFTableModel();
 
-                            sorter = new TableRowSorter<SFTableModel>(model);
+                            sorter = new TableRowSorter<>(model);
                             table = new JTable(model);
                             table.setRowSorter(sorter);
                             table.setFillsViewportHeight(true);
                             //single selector
                             table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                             scrollPane = new JScrollPane(table);
-                        }
-                        
-                        //search/add field
-                        text = new JTextField();
-                        text.setPreferredSize(new Dimension(80, 20));
-                        if (data != "")
-                        {
+                            //adding searcher for the table
                             text.getDocument().addDocumentListener(
                                     new DocumentListener()
                                     {
@@ -237,33 +232,30 @@ public class GUI extends JFrame
                                     {
                                         comm.addData("product",
                                           table.getValueAt(table.getSelectedColumn(), 0).toString());
-                                        Logger.getLogger(GUI.class.getName()).log(
-                                          Level.INFO, "Adding " +
-                                            table.getValueAt(table.getSelectedColumn(), 0).toString());
+                                        logger.log(
+                                          Level.INFO, "Adding {0}", table.getValueAt(table.getSelectedColumn(), 0).toString());
                                     } catch (InterruptedException ex) 
                                     {
-                                        Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                                        logger.log(Level.SEVERE, null, ex);
                                     }
                                 }else
                                 {
                                     try
                                     {
                                         comm.addData("product", text.getText());
-                                        Logger.getLogger(GUI.class.getName()).log(
-                                          Level.INFO, "Input " +
-                                            text.getText());
+                                        logger.log(
+                                          Level.INFO, "Adding {0}", text.getText());
                                     } catch (InterruptedException ex)
                                     {
-                                        Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                                        logger.log(Level.SEVERE, null, ex);
                                     }
                                 }
-                                inputProduct_button.setEnabled(true);
-                                readBarcode_button.setEnabled(true);
+                                enableAddPanelControls(true);
                                 addPanel_controls.remove(text);
                                 addPanel_controls.remove(inputProduct_add);
                                 if (scrollPane != null)
                                 {
-                                    addPanel.remove(scrollPane);
+                                    add_panel.remove(scrollPane);
                                 }
                                 pack();
                             }
@@ -273,7 +265,7 @@ public class GUI extends JFrame
                         addPanel_controls.add(inputProduct_add);
                         if (scrollPane != null)
                         {
-                            addPanel.add(scrollPane);
+                            add_panel.add(scrollPane);
                         }
                         //need to redefine the rightful choosing of an element
                         pack();
@@ -284,8 +276,8 @@ public class GUI extends JFrame
             
         });
         addPanel_controls.add(inputProduct_button);
-        addPanel.add(addPanel_controls);
-        tabbedPane.add("Add", addPanel);
+        add_panel.add(addPanel_controls);
+        tabbedPane.add("Add", add_panel);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
         remPanel = makePanel();
@@ -303,15 +295,16 @@ public class GUI extends JFrame
     
     private void filterData()
     {
-        RowFilter<SFTableModel, Object> rf = null;
         try
         {
+            RowFilter<SFTableModel, Object> rf = null;
             rf = RowFilter.regexFilter(text.getText(), 0);
-        }catch(PatternSyntaxException e)
+            sorter.setRowFilter(rf);
+        }catch(PatternSyntaxException ex)
         {
+            logger.log(Level.SEVERE, null, ex);
             return;
         }
-        sorter.setRowFilter(rf);
     }
     
     /**
@@ -343,7 +336,7 @@ public class GUI extends JFrame
     {
         try
         {
-            if (serString == "")
+            if ("".equals(serString))
             {
                 return new String[0];
             }
@@ -351,14 +344,39 @@ public class GUI extends JFrame
             in = new ByteArrayInputStream(Base64.decode(serString));
             String[] ret = (String[]) new ObjectInputStream(in).readObject();
             return ret;
+        } catch (IOException | ClassNotFoundException ex)
+        {
+            logger.log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    private void enableAddPanelControls(boolean enabled)
+    {
+        inputProduct_button.setEnabled(enabled);
+        readBarcode_button.setEnabled(enabled);
+    }
+    
+    private String retrieveBarcode()
+    {
+        try
+        {
+            String barcode = r.readImage(c.takePicture());
+            while (barcode.equals(""))
+            {
+                barcode = r.readImage(c.takePicture());
+            }
+            return barcode;
         } catch (IOException ex)
         {
             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex)
-        {
-            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Error while trying to take a picture");
         }
-        return null;
+    }
+    
+    public void setModelData(String[] data)
+    {
+        model.setData(data);
     }
 }
 
