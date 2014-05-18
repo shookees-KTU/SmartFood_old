@@ -43,6 +43,9 @@ import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 
 /**
@@ -129,13 +132,45 @@ public class SmartFood extends Agent
                             {
                                 case "products-request":
                                     //requests for the whole list of products
-                                    String b64str = stringArrayToBase64(getUsedProducts());
+                                    String b64str = stringMatrixToBase64(getUsedProducts());
                                     sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
                                     break;
                                 case "add-data":
                                     //add data to database
-                                    BasicDBObject doc = new BasicDBObject("product", msg.getContent());
-                                    mongo_db.getCollection("products").insert(doc);
+                                    BasicDBObject doc = new BasicDBObject();
+                                    JSONParser parser = new JSONParser();
+                                    try
+                                    {
+                                        JSONObject json = (JSONObject)parser.parse(msg.getContent());
+                                        if (json.get("product") != null)
+                                        {
+                                            doc.put("product", json.get("product"));
+                                        }
+                                        
+                                        if (json.get("barcode") != null)
+                                        {
+                                            doc.put("barcode", json.get("barcode"));
+                                        }
+                                        
+                                        if (json.get("expiry") != null)
+                                        {
+                                            doc.put("expiry", json.get("expiry"));
+                                        }
+                                    } catch (ParseException ex)
+                                    {
+                                        Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                    
+                                    
+                                    DBCursor cursor = mongo_db.getCollection("products").find(doc);
+                                    if (cursor.count() == 0)
+                                    {
+                                        logger.log(Level.INFO, "Adding product: " + msg.getContent());
+                                        mongo_db.getCollection("products").insert(doc);
+                                    }else
+                                    {
+                                        logger.log(Level.INFO, "Product already exists: " + msg.getContent());
+                                    }
                             }
                             break;
                     }
@@ -177,16 +212,18 @@ public class SmartFood extends Agent
      * 
      * @return String[] array of used products
      */
-    public String[] getUsedProducts()
+    public String[][] getUsedProducts()
     {
         DBCollection product_collection  = mongo_db.getCollection("products");
         DBCursor cursor = product_collection.find();
         int product_count = (int)product_collection.getCount();
-        String[] products = new String[product_count];
+        String[][] products = new String[product_count][3];
         for(int i = 0; i < product_count; i++)
         {
             BasicDBObject obj = (BasicDBObject) cursor.next();
-            products[i] = obj.getString("product");
+            products[i][0] = obj.getString("product");
+            products[i][1] = obj.getString("barcode");
+            products[i][2] = obj.getString("expiry");
         }
         return products;
     }
@@ -214,7 +251,7 @@ public class SmartFood extends Agent
      * @param array the string array to be serialized
      * @return serialized base64 string
      */
-    private String stringArrayToBase64(String[] array)
+    private String stringMatrixToBase64(String[][] array)
     {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         try

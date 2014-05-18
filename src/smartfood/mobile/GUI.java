@@ -35,6 +35,7 @@ import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
@@ -44,6 +45,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,6 +59,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableRowSorter;
+import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
+import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
+import net.sourceforge.jdatepicker.impl.UtilDateModel;
+import org.json.simple.JSONObject;
 
 /**
  *
@@ -75,11 +81,14 @@ public class GUI extends JFrame
     private JButton inputProduct_button;
     private SFTableModel model;
     private JTable table;
-    private JTextField text;
+    private JTextField product_text;
+    private JTextField barcode_text;
     private JScrollPane scrollPane;
     private JButton inputProduct_add;
+    private JDatePickerImpl datePicker = new JDatePickerImpl(new JDatePanelImpl(new UtilDateModel()));
     private TableRowSorter<SFTableModel> sorter;
     private String table_data = "";
+    
     
     private final Cam c;
     private final Reader r;
@@ -134,8 +143,9 @@ public class GUI extends JFrame
                             
                             String barcode = retrieveBarcode();
                             add_panel.remove(webcam_panel);
-                            
-                            comm.addData("Product barcode", barcode);
+                            JSONObject data = new JSONObject();
+                            data.put("barcode", barcode);
+                            comm.addData(data.toString());
                             enableAddPanelControls(true);
                             pack();
                         } catch (InterruptedException ex)
@@ -168,7 +178,7 @@ public class GUI extends JFrame
                         //need to retrieve the list of used products
                         //plan - get serialized String[] and unserialize it.
                         //getProducts might be as well changedto getProducts
-                        String[] products;
+                        String[][] products;
                         try
                         {
                             comm.getData("products");
@@ -194,8 +204,9 @@ public class GUI extends JFrame
                         }
                         
                         //search/add field
-                        text = new JTextField();
-                        text.setPreferredSize(new Dimension(80, 20));
+                        product_text = new JTextField();
+                        product_text.setPreferredSize(new Dimension(80, 20));
+                        TextPrompt product_prompt = new TextPrompt("Product", product_text);
                         //live search on table (if there are any :) )
                         if (table_data != "" && getProducts(table_data).length != 0)
                         {
@@ -210,7 +221,7 @@ public class GUI extends JFrame
                             table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                             scrollPane = new JScrollPane(table);
                             //adding searcher for the table
-                            text.getDocument().addDocumentListener(
+                            product_text.getDocument().addDocumentListener(
                                     new DocumentListener()
                                     {
 
@@ -233,7 +244,51 @@ public class GUI extends JFrame
                                         }
                                     });
                         }
-                        
+                        //expiry date
+                        addPanel_controls.add(datePicker);
+                        //barcode
+                        //search/add field
+                        barcode_text = new JTextField();
+                        barcode_text.setPreferredSize(new Dimension(80, 20));
+                        TextPrompt barcode_prompt = new TextPrompt("Barcode", barcode_text);
+                        //live search on table (if there are any :) )
+                        if (table_data != "" && getProducts(table_data).length != 0)
+                        {
+                            products = getProducts(table_data);
+                            model = new SFTableModel();
+                            model.setData(products);
+                            sorter = new TableRowSorter<>(model);
+                            table = new JTable(model);
+                            table.setRowSorter(sorter);
+                            table.setFillsViewportHeight(true);
+                            //single selector
+                            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                            scrollPane = new JScrollPane(table);
+                            //adding searcher for the table
+                            barcode_text.getDocument().addDocumentListener(
+                                    new DocumentListener()
+                                    {
+
+                                        @Override
+                                        public void insertUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+
+                                        @Override
+                                        public void removeUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+
+                                        @Override
+                                        public void changedUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+                                    });
+                        }
+                        addPanel_controls.add(barcode_text);
                         //Add button
                         inputProduct_add = new JButton("Add");
                         inputProduct_add.addActionListener(new ActionListener()
@@ -247,8 +302,9 @@ public class GUI extends JFrame
                                 {
                                     try 
                                     {
-                                        comm.addData("product",
-                                          table.getValueAt(table.getSelectedColumn(), 0).toString());
+                                        JSONObject data = new JSONObject();
+                                        data.put("product", table.getValueAt(table.getSelectedColumn(), 0).toString().trim());
+                                        comm.addData(data.toString());
                                         logger.log(
                                           Level.INFO, "Adding {0}", table.getValueAt(table.getSelectedColumn(), 0).toString());
                                     } catch (InterruptedException ex) 
@@ -259,26 +315,36 @@ public class GUI extends JFrame
                                 {
                                     try
                                     {
-                                        comm.addData("product", text.getText());
+                                        JSONObject data = new JSONObject();
+                                        data.put("product", product_text.getText());
+                                        comm.addData(data.toString());
                                         logger.log(
-                                          Level.INFO, "Adding {0}", text.getText());
+                                          Level.INFO, "Adding {0}", product_text.getText());
                                     } catch (InterruptedException ex)
                                     {
                                         logger.log(Level.SEVERE, null, ex);
                                     }
                                 }
                                 enableAddPanelControls(true);
-                                addPanel_controls.remove(text);
+                                addPanel_controls.remove(product_text);
                                 addPanel_controls.remove(inputProduct_add);
+                                addPanel_controls.remove(datePicker);
                                 if (scrollPane != null)
                                 {
                                     add_panel.remove(scrollPane);
+                                }
+                                try
+                                {
+                                    comm.getData("products");
+                                } catch (InterruptedException ex)
+                                {
+                                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                                 pack();
                             }
                             
                         });
-                        addPanel_controls.add(text);
+                        addPanel_controls.add(product_text);
                         addPanel_controls.add(inputProduct_add);
                         if (scrollPane != null)
                         {
@@ -315,7 +381,7 @@ public class GUI extends JFrame
         try
         {
             RowFilter<SFTableModel, Object> rf = null;
-            rf = RowFilter.regexFilter(text.getText(), 0);
+            rf = RowFilter.regexFilter(product_text.getText(), 0);
             sorter.setRowFilter(rf);
         }catch(PatternSyntaxException ex)
         {
@@ -349,17 +415,17 @@ public class GUI extends JFrame
      * @param serString
      * @return array of products as in strings
      */
-    private String[] getProducts(String serString)
+    private String[][] getProducts(String serString)
     {
         try
         {
             if ("".equals(serString))
             {
-                return new String[0];
+                return new String[0][0];
             }
             ByteArrayInputStream in;
             in = new ByteArrayInputStream(Base64.decode(serString));
-            String[] ret = (String[]) new ObjectInputStream(in).readObject();
+            String[][] ret = (String[][]) new ObjectInputStream(in).readObject();
             return ret;
         } catch (IOException | ClassNotFoundException ex)
         {
@@ -400,9 +466,9 @@ public class GUI extends JFrame
 class SFTableModel extends AbstractTableModel
 {
     private static final long serialVersionUID = 1L;
-    private final String[] columNames = {"Product name"};
+    private final String[] columNames = {"Product name", "Barcode", "Expiry date"};
 
-    private String[] data;
+    private String[][] data;
     @Override
     public int getRowCount()
     {
@@ -423,7 +489,7 @@ class SFTableModel extends AbstractTableModel
     @Override
     public Object getValueAt(int i, int i1)
     {
-        return data[i];
+        return data[i][i1];
     }
     
     @Override
@@ -432,12 +498,12 @@ class SFTableModel extends AbstractTableModel
         return getValueAt(0, c).getClass();
     }
     
-    public void setData(String[] data)
+    public void setData(String[][] data)
     {
         this.data = data;
     }
     
-    public String[] getData()
+    public String[][] getData()
     {
         return data;
     }

@@ -78,17 +78,15 @@ public class Communicator extends Agent
                 if (msg != null)
                 {
                     sender_name = msg.getSender().getName();
-                    msg_header = msg.getContent().substring(0, msg.getContent().indexOf(":"));
-                    msg_body = msg.getContent().substring(msg.getContent().indexOf(":")+1);
                     switch(msg.getPerformative())
                     {
                         case ACLMessage.REQUEST:
                             //incoming agents requesting some kind of service/data
-                            switch(msg_header)
+                            switch(msg.getOntology())
                             {
-                                case "products":
+                                case "products-request":
                                     //asking for the list of all products
-                                    sendMessage(sf_aid.getName(), msg_header + " " + msg_body, ACLMessage.REQUEST, msg.getOntology());
+                                    sendMessage(sf_aid.getName(), msg.getContent(), ACLMessage.REQUEST, msg.getOntology());
                                     
                                     //TODO: add asynchronized version
                                     String return_content = waitForMessage(ACLMessage.INFORM, 
@@ -98,19 +96,19 @@ public class Communicator extends Agent
                                             ACLMessage.INFORM, msg.getOntology());
                                     break;
                                 default:
-                                    logger.log(Level.WARNING, "Unknown message topic received");
+                                    logger.log(Level.WARNING, "Unknown message ontology: " + msg.getOntology());
                                     break;
                             }
                             break;
                         case ACLMessage.INFORM:
                             //retrieving data from mobile platform
-                            switch(msg_header)
+                            switch(msg.getOntology())
                             {  
                                 case "product":
-                                    sendMessage(sf_aid.getName(), msg_body, msg.getPerformative(), msg.getOntology());
+                                    sendMessage(sf_aid.getName(), msg.getContent(), msg.getPerformative(), msg.getOntology());
                                     break;
                                 default:
-                                    logger.log(Level.WARNING, "Unknown message topic received");
+                                    logger.log(Level.WARNING, "Unknown message ontology: " + msg.getOntology());
                             }
                             break;
                     }

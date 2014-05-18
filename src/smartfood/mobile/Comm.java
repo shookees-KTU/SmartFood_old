@@ -140,19 +140,14 @@ public class Comm extends Agent
      * @return 
      * @throws java.lang.InterruptedException 
      */
-    public void getData(String dataName) throws InterruptedException
+    public void getData(String data) throws InterruptedException
     {
-        sendMessage(server_comm.getName(), dataName+":all", ACLMessage.REQUEST, "products-request");
+        sendMessage(server_comm.getName(), data, ACLMessage.REQUEST, "products-request");
     }
     
-    public void addData(String dataName, String dataValue) throws InterruptedException
+    public void addData(String content) throws InterruptedException
     {
-        ACLMessage msg;
-        msg = new ACLMessage(ACLMessage.INFORM);
-        msg.addReceiver(server_comm);
-        msg.setOntology("add-data");
-        msg.setContent(dataName + ": " + dataValue);
-        send(msg);
+        sendMessage(server_comm.getName(), content, ACLMessage.INFORM, "add-data");
     }
     
     /**
