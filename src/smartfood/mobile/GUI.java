@@ -45,7 +45,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -207,43 +206,6 @@ public class GUI extends JFrame
                         product_text = new JTextField();
                         product_text.setPreferredSize(new Dimension(80, 20));
                         TextPrompt product_prompt = new TextPrompt("Product", product_text);
-                        //live search on table (if there are any :) )
-                        if (table_data != "" && getProducts(table_data).length != 0)
-                        {
-                            products = getProducts(table_data);
-                            model = new SFTableModel();
-                            model.setData(products);
-                            sorter = new TableRowSorter<>(model);
-                            table = new JTable(model);
-                            table.setRowSorter(sorter);
-                            table.setFillsViewportHeight(true);
-                            //single selector
-                            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                            scrollPane = new JScrollPane(table);
-                            //adding searcher for the table
-                            product_text.getDocument().addDocumentListener(
-                                    new DocumentListener()
-                                    {
-
-                                        @Override
-                                        public void insertUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-
-                                        @Override
-                                        public void removeUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-
-                                        @Override
-                                        public void changedUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-                                    });
-                        }
                         //expiry date
                         addPanel_controls.add(datePicker);
                         //barcode
@@ -287,6 +249,28 @@ public class GUI extends JFrame
                                             filterData();
                                         }
                                     });
+                            product_text.getDocument().addDocumentListener(
+                                    new DocumentListener()
+                                    {
+
+                                        @Override
+                                        public void insertUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+
+                                        @Override
+                                        public void removeUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+
+                                        @Override
+                                        public void changedUpdate(DocumentEvent de)
+                                        {
+                                            filterData();
+                                        }
+                                    });
                         }
                         addPanel_controls.add(barcode_text);
                         //Add button
@@ -304,6 +288,10 @@ public class GUI extends JFrame
                                     {
                                         JSONObject data = new JSONObject();
                                         data.put("product", table.getValueAt(table.getSelectedColumn(), 0).toString().trim());
+                                        data.put("barcode", barcode_text.getText());
+                                        Calendar selectedExpiry = (Calendar) datePicker.getModel().getValue();
+                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                                        data.put("expiry", sdf.format(selectedExpiry.getTime()));
                                         comm.addData(data.toString());
                                         logger.log(
                                           Level.INFO, "Adding {0}", table.getValueAt(table.getSelectedColumn(), 0).toString());
@@ -317,6 +305,9 @@ public class GUI extends JFrame
                                     {
                                         JSONObject data = new JSONObject();
                                         data.put("product", product_text.getText());
+                                        data.put("barcode", barcode_text.getText());
+                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                                        data.put("expiry", sdf.format(datePicker.getModel().getValue()));
                                         comm.addData(data.toString());
                                         logger.log(
                                           Level.INFO, "Adding {0}", product_text.getText());
@@ -329,6 +320,7 @@ public class GUI extends JFrame
                                 addPanel_controls.remove(product_text);
                                 addPanel_controls.remove(inputProduct_add);
                                 addPanel_controls.remove(datePicker);
+                                addPanel_controls.remove(barcode_text);
                                 if (scrollPane != null)
                                 {
                                     add_panel.remove(scrollPane);

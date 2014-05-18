@@ -104,7 +104,7 @@ public class Communicator extends Agent
                             //retrieving data from mobile platform
                             switch(msg.getOntology())
                             {  
-                                case "product":
+                                case "add-data":
                                     sendMessage(sf_aid.getName(), msg.getContent(), msg.getPerformative(), msg.getOntology());
                                     break;
                                 default:
