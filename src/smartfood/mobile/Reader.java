@@ -36,12 +36,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
- *
+ * Barcode reader
  * @author Paulius Šukys
  */
 public class Reader 
 {
-    public String readImage(BufferedImage image) throws FileNotFoundException, IOException
+    /**
+     * Reads an image and tries to find barcode
+     * @param image bufferedimage object
+     * @return barcode
+     * @throws IOException if there's problem with reading bufferedimage object
+     */
+    public String readImage(BufferedImage image) throws IOException
     {
         LuminanceSource source = new BufferedImageLuminanceSource(image);
         MultiFormatReader barcodeReader = new MultiFormatReader();
