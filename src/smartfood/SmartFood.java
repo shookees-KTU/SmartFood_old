@@ -52,49 +52,60 @@ import java.util.logging.Logger;
  */
 public class SmartFood extends Agent
 {
+    private static final long serialVersionUID = 1L;
     final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
     //Main-Container -> Server container
     private AgentController yummly_agent;
     private AgentController comm_agent;
-    private MongoClient mongo;
-    private DB db;
+    private MongoClient mongo_client;
+    private DB mongo_db;
     @Override
     /**
      * Includes agent initializations
      */
     protected void setup()
     {
-        //initial setup
+        /**initial setup:
+         * sets up mongo database
+         * sets up yummly agent
+         * sets up comm agent
+         * 
+         * The setup is crucial for correct functioning, on exceptions - exit
+         */
         addBehaviour(new OneShotBehaviour(this)
         {
             private static final long serialVersionUID = 1L;
+            
             @Override
             public void action()
             {                
                 try
                 {
-                    mongo = new MongoClient("localhost");
-                    db = mongo.getDB("SmartFood");
-                    logger.info("Database binded");
+                    mongo_client = new MongoClient("localhost");
+                    mongo_db = mongo_client.getDB("SmartFood");
+                    logger.log(Level.INFO, "Binding {0} database", mongo_db.getName());
                     yummly_agent = createAgent("Yummly");
-                    logger.info("Created: " + yummly_agent.getName());
+                    logger.log(Level.INFO, "Starting {0} agent", yummly_agent.getName());
                     comm_agent = createAgent("Communicator");
-                    logger.info("Created: " + comm_agent.getName());
-                    logger.info("GUI started");
-                    
+                    logger.log(Level.INFO, "Starting {0} agent", comm_agent.getName());
                 }catch (StaleProxyException exc)
                 {
                     logger.log(Level.SEVERE, "Error creating agents\n");
                     logger.log(Level.SEVERE, exc.getMessage());
+                    System.exit(1);
                 } catch (UnknownHostException ex)
                 {
                     logger.log(Level.SEVERE, "Error connecting to mongodb host");
                     logger.log(Level.SEVERE, ex.getMessage());
+                    System.exit(1);
                 }
             }
         });
         
-        //general purpose behaviour
+        /**messaging inbox:
+         * retrieves messages from agents
+         * return back
+         */
         addBehaviour(new CyclicBehaviour(this)
         {
             private static final long serialVersionUID = 1L;
@@ -106,41 +117,26 @@ public class SmartFood extends Agent
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
-                    try 
+                    String sender_name = msg.getSender().getName();
+                    switch (sender_name)
                     {
-                        //gets name and removes the platform name
-                        String name = msg.getSender().getName();
-                        switch (name)
-                        {
-                            case "Yummly@SmartFoodSystem":
-                                content = msg.getContent();
-                                logger.info("Received message from " +
-                                        name + ": " + content);
-                                break;
-                            case "Communicator@SmartFoodSystem":
-                                content = msg.getContent();
-                                switch (content)
-                                {
-                                    case "products all":
-                                        String[] products = getUsedProducts();
-                                        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                                        ObjectOutputStream oout = new ObjectOutputStream(bout);
-                                        oout.writeObject(products);
-                                        oout.close();
-                                        String b64str = Base64.encode(bout.toByteArray());
-                                        //string is ready. send back
-                                        ACLMessage ret;
-                                        ret = new ACLMessage(ACLMessage.INFORM);
-                                        ret.addReceiver(new AID(name, true));
-                                        ret.setContent(b64str);
-                                        send(ret);
-                                        break;
-                                }
-                                break;
-                        }
-                    } catch (IOException ex) 
-                    {
-                        Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
+                        case "Yummly@SmartFoodSystem":
+                            content = msg.getContent();
+                            logger.info("Received message from " +
+                              sender_name + ": " + content);
+                            break;
+                           
+                        case "Communicator@SmartFoodSystem":
+                            content = msg.getContent();
+                            switch (content)
+                            {
+                                case "products all":
+                                    //requests for the whole list of products
+                                    String b64str = stringArrayToBase64(getUsedProducts());
+                                    sendMessage(sender_name, b64str, ACLMessage.INFORM);
+                                    break;
+                            }
+                            break;
                     }
                 }else
                 {
@@ -175,9 +171,14 @@ public class SmartFood extends Agent
         return AController;
     }
     
+    /**
+     * Gets all used products
+     * 
+     * @return String[] array of used products
+     */
     public String[] getUsedProducts()
     {
-        DBCollection product_collection  = db.getCollection("products");
+        DBCollection product_collection  = mongo_db.getCollection("products");
         DBCursor cursor = product_collection.find();
         int product_count = (int)product_collection.getCount();
         String[] products = new String[product_count];
@@ -186,5 +187,45 @@ public class SmartFood extends Agent
             products[i] = cursor.next().toString();
         }
         return products;
+    }
+    
+    /**
+     * Sends a message to agent
+     * 
+     * @param to agent GUID name
+     * @param content content to be sent
+     * @param performative performative level
+     */
+    private void sendMessage(String to, String content, int performative)
+    {
+        ACLMessage msg;
+        msg = new ACLMessage(performative);
+        msg.addReceiver(new AID(to, true));
+        msg.setContent(content);
+        send(msg);
+    }
+    
+    /**
+     * Serializes a string array into base64 single string
+     * 
+     * @param array the string array to be serialized
+     * @return serialized base64 string
+     */
+    private String stringArrayToBase64(String[] array)
+    {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = null;
+        try
+        {
+            oout = new ObjectOutputStream(bout);
+            oout.writeObject(array);
+            oout.close();
+        } catch (IOException ex)
+        {
+            Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, "Error in serialization");
+            Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        String b64str = Base64.encode(bout.toByteArray());
+        return b64str;
     }
 }
