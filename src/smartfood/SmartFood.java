@@ -122,8 +122,7 @@ public class SmartFood extends Agent
                     {
                         case "Yummly@SmartFoodSystem":
                             content = msg.getContent();
-                            logger.info("Received message from " +
-                              sender_name + ": " + content);
+                            logger.log(Level.INFO, "Received message from {0}: {1}", new Object[]{sender_name, content});
                             break;
                            
                         case "Communicator@SmartFoodSystem":
@@ -133,7 +132,7 @@ public class SmartFood extends Agent
                                 case "products all":
                                     //requests for the whole list of products
                                     String b64str = stringArrayToBase64(getUsedProducts());
-                                    sendMessage(sender_name, b64str, ACLMessage.INFORM);
+                                    sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
                                     break;
                             }
                             break;
@@ -150,7 +149,7 @@ public class SmartFood extends Agent
     @Override
     protected void takeDown()
     {
-        logger.info("Agent "+ getAID().getName() + " terminating.");
+        logger.log(Level.INFO, "Agent {0} terminating.", getAID().getName());
     }
     
     /**
@@ -196,11 +195,12 @@ public class SmartFood extends Agent
      * @param content content to be sent
      * @param performative performative level
      */
-    private void sendMessage(String to, String content, int performative)
+    private void sendMessage(String to, String content, int performative, String ontology)
     {
         ACLMessage msg;
         msg = new ACLMessage(performative);
         msg.addReceiver(new AID(to, true));
+        msg.setOntology(ontology);
         msg.setContent(content);
         send(msg);
     }
@@ -214,9 +214,9 @@ public class SmartFood extends Agent
     private String stringArrayToBase64(String[] array)
     {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = null;
         try
         {
+            ObjectOutputStream oout;
             oout = new ObjectOutputStream(bout);
             oout.writeObject(array);
             oout.close();
