@@ -35,6 +35,8 @@ import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
@@ -77,6 +79,7 @@ public class GUI extends JFrame
     private JScrollPane scrollPane;
     private JButton inputProduct_add;
     private TableRowSorter<SFTableModel> sorter;
+    private String table_data = "";
     
     private final Cam c;
     private final Reader r;
@@ -166,10 +169,25 @@ public class GUI extends JFrame
                         //plan - get serialized String[] and unserialize it.
                         //getProducts might be as well changedto getProducts
                         String[] products;
-                        String data = "";
                         try
                         {
-                            data = comm.getData("products");
+                            comm.getData("products");
+                            //wait 10 seconds
+                            int waitTime = 10;//seconds
+        
+                            //using the time comparisson method rather than Thread.sleep()
+                            Calendar current_time = Calendar.getInstance();
+                            current_time.setTime(new Date());
+                            Calendar wait_time = Calendar.getInstance();
+                            wait_time.setTime(new Date());
+                            wait_time.add(Calendar.SECOND, waitTime);
+                            while(table_data != "" && 
+                                    current_time.get(Calendar.SECOND) !=
+                                    wait_time.get(Calendar.SECOND))
+                            {
+                                //do nothing lol
+                                //FIXME: repair the logic...
+                            }
                         } catch (InterruptedException ex)
                         {
                             logger.log(Level.SEVERE, null, ex);
@@ -179,10 +197,9 @@ public class GUI extends JFrame
                         text = new JTextField();
                         text.setPreferredSize(new Dimension(80, 20));
                         //live search on table (if there are any :) )
-                        System.out.println(data);
-                        if (!"".equals(data))
+                        if (table_data != "" && getProducts(table_data).length != 0)
                         {
-                            products = getProducts(data);
+                            products = getProducts(table_data);
                             model = new SFTableModel();
 
                             sorter = new TableRowSorter<>(model);
@@ -374,9 +391,9 @@ public class GUI extends JFrame
         }
     }
     
-    public void setModelData(String[] data)
+    public void setTableData(String data)
     {
-        model.setData(data);
+        table_data = data;
     }
 }
 
@@ -418,5 +435,10 @@ class SFTableModel extends AbstractTableModel
     public void setData(String[] data)
     {
         this.data = data;
+    }
+    
+    public String[] getData()
+    {
+        return data;
     }
 }

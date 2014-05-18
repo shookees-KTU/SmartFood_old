@@ -81,7 +81,6 @@ public class Comm extends Agent
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
-                    System.out.println("CYCLIC GOT DA MESSAGE");
                     name = msg.getSender().getName();
                     if (name.equals("Communicator@SmartFoodSystem"))
                     {
@@ -89,6 +88,17 @@ public class Comm extends Agent
                         {
                             case ACLMessage.REQUEST:
                                 logger.log(Level.INFO, "Server request received, ID: " + msg.getConversationId());
+                                break;
+                            case ACLMessage.INFORM:
+                                //give info
+                                switch(msg.getOntology())
+                                {
+                                    case "products-request":
+                                        gui.setTableData(msg.getContent());
+                                        break;
+                                    case "notification":
+                                        break;
+                                }
                                 break;
                         }
                     }else
@@ -130,37 +140,9 @@ public class Comm extends Agent
      * @return 
      * @throws java.lang.InterruptedException 
      */
-    public String getData(String dataName) throws InterruptedException
+    public void getData(String dataName) throws InterruptedException
     {
-        ACLMessage msg;
-        msg = new ACLMessage(ACLMessage.REQUEST);
-        msg.addReceiver(server_comm);
-        msg.setOntology("products-request");
-        msg.setContent(dataName + ":all");
-        send(msg);
-        
-        ACLMessage ret = receive();
-        int waitTime = 10;//seconds
-        while(ret == null && waitTime != 0)
-        {
-            logger.info("Message sent to server communicator, waiting for response...");
-            Thread.sleep(1000);//1 second
-            waitTime -= 1;
-            ret = receive();
-            if (ret != null && msg.getPerformative() != ACLMessage.INFORM)
-            {
-                ret = null;//not the message we're waiting for
-            }
-        }
-        
-        if (ret != null)
-        {
-            return ret.getContent();
-        }else
-        {
-            logger.log(Level.SEVERE, "Waited for 10 seconds and no response!");
-            return "";
-        }
+        sendMessage(server_comm.getName(), dataName+":all", ACLMessage.REQUEST, "products-request");
     }
     
     public void addData(String dataName, String dataValue) throws InterruptedException
