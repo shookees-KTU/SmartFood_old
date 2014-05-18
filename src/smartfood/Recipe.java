@@ -26,10 +26,8 @@ package smartfood;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * A recipe object for retrieved Yummly request
@@ -37,17 +35,16 @@ import java.util.logging.Logger;
  */
 public class Recipe 
 {
-    final Logger logger = jade.util.Logger.getMyLogger(this.getClass().getName());
-    private Map<String, Double> flavors;//flavor - 0..1 percentage
+    private final Map<String, Double> flavors;//flavor - 0..1 percentage
     private String name;
     private String source;
     private int rating;
-    private List ingredients;
+    private final List ingredients;
     private String id;
     public Recipe()
     {
         ingredients = new ArrayList();
-        flavors = new HashMap<String, Double>();
+        flavors = new HashMap<>();
         flavors.put("salty", 0.0);
         flavors.put("meaty", 0.0);
         flavors.put("sour", 0.0);
@@ -120,6 +117,7 @@ public class Recipe
     }
     
     //mainly for debugging
+    @Override
     public String toString()
     {
         String r = "Name: " + name + "\n";
@@ -133,10 +131,8 @@ public class Recipe
         }
         r += "\n";
         r += "Flavors:\n";
-        Iterator iterator = flavors.entrySet().iterator();
-        while (iterator.hasNext())
+        for (Map.Entry mapEntry : flavors.entrySet())
         {
-            Map.Entry mapEntry = (Map.Entry) iterator.next();
             r += "\t" + mapEntry.getKey() + ": " + mapEntry.getValue() + "\n";
         }
         return r;
