@@ -73,22 +73,22 @@ public class Communicator extends Agent
             public void action()
             {
                 //reading ALL message received
-                String sender_name, msg_topic, msg_request;
+                String sender_name, msg_header, msg_body;
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
                     sender_name = msg.getSender().getName();
+                    msg_header = msg.getContent().substring(0, msg.getContent().indexOf(":"));
+                    msg_body = msg.getContent().substring(msg.getContent().indexOf(":")+1);
                     switch(msg.getPerformative())
                     {
                         case ACLMessage.REQUEST:
                             //incoming agents requesting some kind of service/data
-                            msg_topic = msg.getContent().substring(0, msg.getContent().indexOf(":"));
-                            msg_request = msg.getContent().substring(msg.getContent().indexOf(":")+1);
-                            switch(msg_topic)
+                            switch(msg_header)
                             {
                                 case "products":
                                     //asking for the list of all products
-                                    sendMessage(sf_aid.getName(), msg_topic + " " + msg_request, ACLMessage.REQUEST, msg.getOntology());
+                                    sendMessage(sf_aid.getName(), msg_header + " " + msg_body, ACLMessage.REQUEST, msg.getOntology());
                                     
                                     //TODO: add asynchronized version
                                     String return_content = waitForMessage(ACLMessage.INFORM, 
@@ -104,6 +104,14 @@ public class Communicator extends Agent
                             break;
                         case ACLMessage.INFORM:
                             //retrieving data from mobile platform
+                            switch(msg_header)
+                            {  
+                                case "product":
+                                    sendMessage(sf_aid.getName(), msg_body, msg.getPerformative(), msg.getOntology());
+                                    break;
+                                default:
+                                    logger.log(Level.WARNING, "Unknown message topic received");
+                            }
                             break;
                     }
                 }

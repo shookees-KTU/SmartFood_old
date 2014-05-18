@@ -23,6 +23,7 @@
  */
 package smartfood;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -90,14 +91,12 @@ public class SmartFood extends Agent
                     logger.log(Level.INFO, "Starting {0} agent", comm_agent.getName());
                 }catch (StaleProxyException exc)
                 {
-                    logger.log(Level.SEVERE, "Error creating agents\n");
                     logger.log(Level.SEVERE, exc.getMessage());
-                    System.exit(1);
+                    throw new RuntimeException("Error adding agent");
                 } catch (UnknownHostException ex)
                 {
-                    logger.log(Level.SEVERE, "Error connecting to mongodb host");
                     logger.log(Level.SEVERE, ex.getMessage());
-                    System.exit(1);
+                    throw new RuntimeException("Error connecting to mongodb host");
                 }
             }
         });
@@ -126,14 +125,17 @@ public class SmartFood extends Agent
                             break;
                            
                         case "Communicator@SmartFoodSystem":
-                            content = msg.getContent();
-                            switch (content)
+                            switch (msg.getOntology())
                             {
-                                case "products all":
+                                case "products-request":
                                     //requests for the whole list of products
                                     String b64str = stringArrayToBase64(getUsedProducts());
                                     sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
                                     break;
+                                case "add-data":
+                                    //add data to database
+                                    BasicDBObject doc = new BasicDBObject("product", msg.getContent());
+                                    mongo_db.getCollection("products").insert(doc);
                             }
                             break;
                     }
@@ -183,7 +185,8 @@ public class SmartFood extends Agent
         String[] products = new String[product_count];
         for(int i = 0; i < product_count; i++)
         {
-            products[i] = cursor.next().toString();
+            BasicDBObject obj = (BasicDBObject) cursor.next();
+            products[i] = obj.getString("product");
         }
         return products;
     }

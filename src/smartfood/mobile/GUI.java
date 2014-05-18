@@ -181,7 +181,7 @@ public class GUI extends JFrame
                             Calendar wait_time = Calendar.getInstance();
                             wait_time.setTime(new Date());
                             wait_time.add(Calendar.SECOND, waitTime);
-                            while(table_data != "" && 
+                            while(table_data == "" && 
                                     current_time.get(Calendar.SECOND) !=
                                     wait_time.get(Calendar.SECOND))
                             {
@@ -201,7 +201,7 @@ public class GUI extends JFrame
                         {
                             products = getProducts(table_data);
                             model = new SFTableModel();
-
+                            model.setData(products);
                             sorter = new TableRowSorter<>(model);
                             table = new JTable(model);
                             table.setRowSorter(sorter);

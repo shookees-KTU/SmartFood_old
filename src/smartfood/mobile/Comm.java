@@ -150,6 +150,7 @@ public class Comm extends Agent
         ACLMessage msg;
         msg = new ACLMessage(ACLMessage.INFORM);
         msg.addReceiver(server_comm);
+        msg.setOntology("add-data");
         msg.setContent(dataName + ": " + dataValue);
         send(msg);
     }
