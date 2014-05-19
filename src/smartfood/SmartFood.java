@@ -134,8 +134,17 @@ public class SmartFood extends Agent
                             {
                                 case "products-request":
                                     //requests for the whole list of products
-                                    String b64str = stringMatrixToBase64(getUsedProducts());
-                                    sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
+                                    switch(msg.getContent())
+                                    {
+                                        case "current-products":
+                                            String b64str = stringMatrixToBase64(getCurrentProducts());
+                                            sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
+                                            break;
+                                        case "products":
+                                            b64str = stringMatrixToBase64(getUsedProducts());
+                                            sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
+                                            break;
+                                    }
                                     break;
                                 case "add-data":
                                     //add data to database
@@ -173,7 +182,7 @@ public class SmartFood extends Agent
                                         logger.log(Level.INFO, "Product already exists: " + msg.getContent());
                                     }
                                     //add to current products collection
-                                    mongo_db.getCollection("current-products").insert(doc);
+                                    mongo_db.getCollection("current_products").insert(doc);
                                     break;
                                 case "remove-data":
                                     try
@@ -198,7 +207,7 @@ public class SmartFood extends Agent
                                         Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                     
-                                    mongo_db.getCollection("current-products").remove(doc);
+                                    mongo_db.getCollection("current_products").remove(doc);
                                     break;
                             }
                             break;
@@ -244,6 +253,22 @@ public class SmartFood extends Agent
     public String[][] getUsedProducts()
     {
         DBCollection product_collection  = mongo_db.getCollection("products");
+        DBCursor cursor = product_collection.find();
+        int product_count = (int)product_collection.getCount();
+        String[][] products = new String[product_count][3];
+        for(int i = 0; i < product_count; i++)
+        {
+            BasicDBObject obj = (BasicDBObject) cursor.next();
+            products[i][0] = obj.getString("product");
+            products[i][1] = obj.getString("barcode");
+            products[i][2] = obj.getString("expiry");
+        }
+        return products;
+    }
+    
+    public String[][] getCurrentProducts()
+    {
+        DBCollection product_collection  = mongo_db.getCollection("current_products");
         DBCursor cursor = product_collection.find();
         int product_count = (int)product_collection.getCount();
         String[][] products = new String[product_count][3];

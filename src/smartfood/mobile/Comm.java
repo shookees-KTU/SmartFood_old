@@ -96,6 +96,8 @@ public class Comm extends Agent
                                     case "products-request":
                                         gui.setTableData(msg.getContent());
                                         break;
+                                    case "current-products-request":
+                                        gui.setCurrentData(msg.getContent());
                                     case "notification":
                                         break;
                                 }
