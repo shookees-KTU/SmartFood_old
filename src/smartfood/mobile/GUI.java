@@ -36,7 +36,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
@@ -75,6 +74,7 @@ public class GUI extends JFrame
     private JComponent remove_panel;
     private JComponent view_panel;
     private JComponent add_panel_ctrl;
+    private JComponent remove_panel_ctrl;
     private JButton readBarcode_button;
     private JButton inputProduct_button;
     private JTextField product_text;
@@ -119,7 +119,12 @@ public class GUI extends JFrame
                 panel.add(inputProduct_button);
                 break;
             case "remove":
+                panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
                 
+                readBarcode_button = getBarcodeButton(tab);
+                inputProduct_button = getInputProdButton(tab);
+                panel.add(readBarcode_button);
+                panel.add(inputProduct_button);
                 break;
             case "view":
                 
@@ -419,6 +424,8 @@ public class GUI extends JFrame
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
         remove_panel = makePanel();
+        remove_panel_ctrl = initControlPanel("remove");
+        remove_panel.add(remove_panel_ctrl);
         tabbedPane.add("Remove", remove_panel);
         tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
         

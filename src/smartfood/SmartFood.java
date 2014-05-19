@@ -128,6 +128,8 @@ public class SmartFood extends Agent
                             break;
                            
                         case "Communicator@SmartFoodSystem":
+                            BasicDBObject doc = new BasicDBObject();
+                            JSONParser parser = new JSONParser();
                             switch (msg.getOntology())
                             {
                                 case "products-request":
@@ -137,8 +139,7 @@ public class SmartFood extends Agent
                                     break;
                                 case "add-data":
                                     //add data to database
-                                    BasicDBObject doc = new BasicDBObject();
-                                    JSONParser parser = new JSONParser();
+                                    
                                     try
                                     {
                                         JSONObject json = (JSONObject)parser.parse(msg.getContent());
@@ -171,6 +172,34 @@ public class SmartFood extends Agent
                                     {
                                         logger.log(Level.INFO, "Product already exists: " + msg.getContent());
                                     }
+                                    //add to current products collection
+                                    mongo_db.getCollection("current-products").insert(doc);
+                                    break;
+                                case "remove-data":
+                                    try
+                                    {
+                                        JSONObject json = (JSONObject) parser.parse(msg.getContent());
+                                        if (json.get("product") != null)
+                                        {
+                                            doc.put("product", json.get("product"));
+                                        }
+                                        
+                                        if (json.get("barcode") != null)
+                                        {
+                                            doc.put("barcode", json.get("barcode"));
+                                        }
+                                        
+                                        if (json.get("expiry") != null)
+                                        {
+                                            doc.put("expiry", json.get("expiry"));
+                                        }
+                                    } catch (ParseException ex)
+                                    {
+                                        Logger.getLogger(SmartFood.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                    
+                                    mongo_db.getCollection("current-products").remove(doc);
+                                    break;
                             }
                             break;
                     }
