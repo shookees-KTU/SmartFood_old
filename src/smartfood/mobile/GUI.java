@@ -36,17 +36,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -73,19 +72,18 @@ public class GUI extends JFrame
     private final Logger logger = Logger.getLogger(GUI.class.getName());
     private JTabbedPane tabbedPane;
     private JComponent add_panel;
-    private JComponent remPanel;
-    private JComponent viePanel;
-    private JComponent addPanel_controls;
+    private JComponent remove_panel;
+    private JComponent view_panel;
+    private JComponent add_panel_ctrl;
     private JButton readBarcode_button;
     private JButton inputProduct_button;
-    private SFTableModel model;
-    private JTable table;
     private JTextField product_text;
     private JTextField barcode_text;
     private JScrollPane scrollPane;
-    private JButton inputProduct_add;
-    private JDatePickerImpl datePicker = new JDatePickerImpl(new JDatePanelImpl(new UtilDateModel()));
     private TableRowSorter<SFTableModel> sorter;
+    private JTable table;
+    private JButton submit_button;
+    private JDatePickerImpl date_picker;
     private String table_data = "";
     
     
@@ -107,265 +105,329 @@ public class GUI extends JFrame
         setVisible(true);
     }
     
-    /**
-     * Initiates the GUI components
-     */
-    private void initComponents()
+    private JComponent initControlPanel(String tab)
     {
-        tabbedPane = new JTabbedPane();
-        //add by webcam photo or text
-        add_panel = makePanel();
-        addPanel_controls = makePanel();
-        addPanel_controls.setLayout(new BoxLayout(addPanel_controls, BoxLayout.PAGE_AXIS));
-        
-        //webcam read start and display
-        readBarcode_button = new JButton("Read barcode");
-        JLabel image_label = new JLabel(new ImageIcon());
-        readBarcode_button.addActionListener(new ActionListener()
+        JComponent panel = makePanel();
+        switch(tab)
+        {
+            case "add":
+                panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+                
+                readBarcode_button = getBarcodeButton(tab);
+                inputProduct_button = getInputProdButton(tab);
+                panel.add(readBarcode_button);
+                panel.add(inputProduct_button);
+                break;
+            case "remove":
+                
+                break;
+            case "view":
+                
+                break;
+        }
+        return panel;
+    }
+    
+    /**
+     * General method for getting active barcode reader button which inhibits
+     * webcam panel, reads the barcode, removes the panel and sends the data to server
+     * @param tab - tab name in which the button will be added
+     * @return "Read barcode" button
+     */
+    private JButton getBarcodeButton(final String tab)
+    {
+        JButton button = new JButton("Read barcode");
+        button.addActionListener(new ActionListener()
         {
             @Override
-            public void actionPerformed(ActionEvent ae)
+            public void actionPerformed(ActionEvent e)
             {
-                Thread t;
-                t = new Thread()
-                {
-                    @Override
-                    public void run()
-                    {
-                        try
-                        {
-                            enableAddPanelControls(false);
+               Thread t = new Thread()
+               {
+                   @Override
+                   public void run()
+                   {
+                       try
+                       {
+                            enablePanelControls(tab, false);
                             final WebcamPanel webcam_panel = c.getPanel(true, true);
                             
                             add_panel.add(webcam_panel);
                             pack();
                             
+                            //try to get the barcode
                             String barcode = retrieveBarcode();
-                            add_panel.remove(webcam_panel);
                             JSONObject data = new JSONObject();
                             data.put("barcode", barcode);
-                            comm.addData(data.toString());
-                            enableAddPanelControls(true);
+                            switch(tab)
+                            {
+                                case "add":
+                                    comm.addData(data.toString());
+                                    break;
+                                case "remove":
+                                    comm.removeData(data.toString());
+                                    break;
+                                default:
+                                    logger.log(Level.WARNING, "Unknown tab name!");
+                            }
+                            //get pack to previous state
+                            add_panel.remove(webcam_panel);
+                            enablePanelControls(tab, true);
                             pack();
-                        } catch (InterruptedException ex)
-                        {
-                            logger.log(Level.SEVERE, null, ex);
-                        }
-                    }
-                };
-                t.start();
+                       }catch (InterruptedException exc)
+                       {
+                           logger.log(Level.WARNING, "Thread has been interrupted!");
+                       }
+                   }
+               };
+               t.start();
             }
-            
         });
-        addPanel_controls.add(readBarcode_button);
-        
-        //input box and result table
-        inputProduct_button = new JButton("Input product");
-        inputProduct_button.addActionListener(new ActionListener()
+        return button;
+    }
+    
+    /**
+     * Return input product button
+     * @param tab
+     * @return 
+     */
+    private JButton getInputProdButton(final String tab)
+    {
+        JButton button = new JButton("Input product");
+        button.addActionListener(new ActionListener()
         {
 
             @Override
-            public void actionPerformed(ActionEvent ae)
+            public void actionPerformed(ActionEvent e)
             {
-                Thread t;
-                t = new Thread()
+                Thread t = new Thread()
                 {
                     @Override
                     public void run()
                     {
-                        enableAddPanelControls(false);
-                        //need to retrieve the list of used products
-                        //plan - get serialized String[] and unserialize it.
-                        //getProducts might be as well changedto getProducts
-                        String[][] products;
                         try
                         {
+                            enablePanelControls(tab, false);
+                            /*ask for asynchronous data retrieval. When retrieved
+                             *the class global "table_data" will be changed*/
                             comm.getData("products");
-                            //wait 10 seconds
-                            int waitTime = 10;//seconds
-        
-                            //using the time comparisson method rather than Thread.sleep()
-                            Calendar current_time = Calendar.getInstance();
-                            current_time.setTime(new Date());
-                            Calendar wait_time = Calendar.getInstance();
-                            wait_time.setTime(new Date());
-                            wait_time.add(Calendar.SECOND, waitTime);
-                            while(table_data == "" && 
-                                    current_time.get(Calendar.SECOND) !=
-                                    wait_time.get(Calendar.SECOND))
-                            {
-                                //do nothing lol
-                                //FIXME: repair the logic...
-                            }
-                        } catch (InterruptedException ex)
-                        {
-                            logger.log(Level.SEVERE, null, ex);
-                        }
-                        
-                        //search/add field
-                        product_text = new JTextField();
-                        product_text.setPreferredSize(new Dimension(80, 20));
-                        TextPrompt product_prompt = new TextPrompt("Product", product_text);
-                        //expiry date
-                        addPanel_controls.add(datePicker);
-                        //barcode
-                        //search/add field
-                        barcode_text = new JTextField();
-                        barcode_text.setPreferredSize(new Dimension(80, 20));
-                        TextPrompt barcode_prompt = new TextPrompt("Barcode", barcode_text);
-                        //live search on table (if there are any :) )
-                        if (table_data != "" && getProducts(table_data).length != 0)
-                        {
-                            products = getProducts(table_data);
-                            model = new SFTableModel();
-                            model.setData(products);
-                            sorter = new TableRowSorter<>(model);
-                            table = new JTable(model);
-                            table.setRowSorter(sorter);
-                            table.setFillsViewportHeight(true);
-                            //single selector
-                            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                            scrollPane = new JScrollPane(table);
-                            //adding searcher for the table
-                            barcode_text.getDocument().addDocumentListener(
-                                    new DocumentListener()
-                                    {
-
-                                        @Override
-                                        public void insertUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-
-                                        @Override
-                                        public void removeUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-
-                                        @Override
-                                        public void changedUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-                                    });
-                            product_text.getDocument().addDocumentListener(
-                                    new DocumentListener()
-                                    {
-
-                                        @Override
-                                        public void insertUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-
-                                        @Override
-                                        public void removeUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-
-                                        @Override
-                                        public void changedUpdate(DocumentEvent de)
-                                        {
-                                            filterData();
-                                        }
-                                    });
-                        }
-                        addPanel_controls.add(barcode_text);
-                        //Add button
-                        inputProduct_add = new JButton("Add");
-                        inputProduct_add.addActionListener(new ActionListener()
-                        {
-
-                            @Override
-                            public void actionPerformed(ActionEvent ae)
-                            {
-                                //should be some kind of definition binding to send data to Comm
-                                if (scrollPane != null && table.getSelectedRow() != -1)
-                                {
-                                    try 
-                                    {
-                                        JSONObject data = new JSONObject();
-                                        data.put("product", table.getValueAt(table.getSelectedColumn(), 0).toString().trim());
-                                        data.put("barcode", barcode_text.getText());
-                                        Calendar selectedExpiry = (Calendar) datePicker.getModel().getValue();
-                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                                        data.put("expiry", sdf.format(selectedExpiry.getTime()));
-                                        comm.addData(data.toString());
-                                        logger.log(
-                                          Level.INFO, "Adding {0}", table.getValueAt(table.getSelectedColumn(), 0).toString());
-                                    } catch (InterruptedException ex) 
-                                    {
-                                        logger.log(Level.SEVERE, null, ex);
-                                    }
-                                }else
-                                {
-                                    try
-                                    {
-                                        JSONObject data = new JSONObject();
-                                        data.put("product", product_text.getText());
-                                        data.put("barcode", barcode_text.getText());
-                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                                        data.put("expiry", sdf.format(datePicker.getModel().getValue()));
-                                        comm.addData(data.toString());
-                                        logger.log(
-                                          Level.INFO, "Adding {0}", product_text.getText());
-                                    } catch (InterruptedException ex)
-                                    {
-                                        logger.log(Level.SEVERE, null, ex);
-                                    }
-                                }
-                                enableAddPanelControls(true);
-                                addPanel_controls.remove(product_text);
-                                addPanel_controls.remove(inputProduct_add);
-                                addPanel_controls.remove(datePicker);
-                                addPanel_controls.remove(barcode_text);
-                                if (scrollPane != null)
-                                {
-                                    add_panel.remove(scrollPane);
-                                }
-                                try
-                                {
-                                    comm.getData("products");
-                                } catch (InterruptedException ex)
-                                {
-                                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                                pack();
-                            }
                             
-                        });
-                        addPanel_controls.add(product_text);
-                        addPanel_controls.add(inputProduct_add);
-                        if (scrollPane != null)
+                            waitForDataRetrieval(10);
+                            
+                            product_text = getTextField("Product name");
+                            product_text.getDocument().addDocumentListener(getDataTableDocumentListener());
+                            date_picker = getDatePicker();
+                            barcode_text = getTextField("Barcode");
+                            barcode_text.getDocument().addDocumentListener(getDataTableDocumentListener());
+                            //submit button for control panel
+                            submit_button = getSubmitButton(tab);
+                            
+                            //adding to control panel
+                            add_panel_ctrl.add(product_text);
+                            add_panel_ctrl.add(barcode_text);
+                            add_panel_ctrl.add(date_picker);
+                            add_panel_ctrl.add(submit_button);
+                            
+                            
+                            if (table_data != "" && getProducts(table_data).length != 0)
+                            {
+                                String[][] products = getProducts(table_data);
+                                scrollPane = getDataTableSP(products);
+                                add_panel.add(scrollPane);
+                            }
+                            pack();
+                        }catch(InterruptedException exc)
                         {
-                            add_panel.add(scrollPane);
+                            logger.log(Level.WARNING, "Thread has been interrupted");
                         }
-                        //need to redefine the rightful choosing of an element
-                        pack();
                     }
                 };
                 t.start();
             }
             
         });
-        addPanel_controls.add(inputProduct_button);
-        add_panel.add(addPanel_controls);
+        return button;
+    }
+    
+    /**
+     * Gets a text field with a placholder
+     * @param placeholder text to be put in placholder
+     * @return text field object
+     */
+    private JTextField getTextField(String placeholder)
+    {
+        JTextField tf = new JTextField();
+        tf.setPreferredSize(new Dimension(80, 20));
+        TextPrompt tp = new TextPrompt(placeholder, tf);
+        return tf;
+    }
+    
+    /**
+     * Gets the date picker implementation
+     * @return date picker
+     */
+    private JDatePickerImpl getDatePicker()
+    {
+        return new JDatePickerImpl(new JDatePanelImpl(new UtilDateModel()));
+    }
+    
+    /**
+     * Waits for table_data variable to be populated
+     * @param waitSeconds how much seconds to wait
+     */
+    private void waitForDataRetrieval(int waitSeconds)
+    {
+        Calendar current_time = Calendar.getInstance();
+        current_time.setTime(new Date());
+        Calendar wait_time = Calendar.getInstance();
+        wait_time.setTime(new Date());
+        wait_time.add(Calendar.SECOND, waitSeconds);
+        while(table_data.equals("") &&
+                current_time.get(Calendar.SECOND) !=
+                wait_time.get(Calendar.SECOND))
+        {}
+            
+    }
+    
+    /**
+     * Creates a sortable table model with populated data
+     * @param tableData data to populate
+     * @return scroll pane  for the table model
+     */
+    private JScrollPane getDataTableSP(String[][] tableData)
+    {
+        SFTableModel model = new SFTableModel();
+        model.setData(tableData);
+        //might need to remove this global state, since several tables with sorters will be available
+        sorter = new TableRowSorter<>(model);
+        table = new JTable(model);
+        table.setRowSorter(sorter);
+        table.setFillsViewportHeight(true);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane pane = new JScrollPane(table);
+        return pane;
+    }
+    
+    /**
+     * Creates a simple data table document listener which updates on any action
+     * @return the document listener
+     */
+    private DocumentListener getDataTableDocumentListener()
+    {
+        DocumentListener dl = new DocumentListener()
+        {
+
+            @Override
+            public void insertUpdate(DocumentEvent e)
+            {
+                filterData();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e)
+            {
+                filterData();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e)
+            {
+                filterData();
+            }   
+        };
+        return dl;
+    }
+    
+    /**
+     * Returns a tab specific submit button
+     * @param tab tab name
+     * @return button for submission
+     */
+    private JButton getSubmitButton(final String tab)
+    {
+        JButton button = new JButton("Submit");
+        button.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                try
+                {
+                    if (scrollPane != null && table.getSelectedRow() != -1)
+                    {
+                        JSONObject data = new JSONObject();
+                        data.put("product", table.getValueAt(table.getSelectedRow(), 0).toString().trim());
+                        data.put("barcode", table.getValueAt(table.getSelectedRow(), 1).toString().trim());
+                        data.put("expiry", table.getValueAt(table.getSelectedRow(), 2).toString().trim());
+                        comm.addData(data.toString());
+                        logger.log(Level.INFO, "Adding {0}", 
+                                table.getValueAt(table.getSelectedColumn(), 0).toString());
+                    }else
+                    {
+                        JSONObject data = new JSONObject();
+                        data.put("product", product_text.getText().trim());
+                        data.put("barcode", barcode_text.getText().trim());
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        data.put("expiry", sdf.format(date_picker.getModel().getValue()));
+                        comm.addData(data.toString().trim());
+                        logger.log(Level.INFO, 
+                                "Adding {0}", product_text.getText());
+                    }
+                    enablePanelControls(tab, true);
+                    //remove controls and scrollpane
+                    removeControls(tab);
+                    //refresh data
+                    comm.getData("products");
+                }catch(InterruptedException exc)
+                {
+                    logger.log(Level.WARNING, "Thread has been interrupted");
+                }
+            }
+        });
+        return button;
+    }
+    
+    private void removeControls(String tab)
+    {
+        switch(tab)
+        {
+            case "add":
+                add_panel_ctrl.remove(product_text);
+                add_panel_ctrl.remove(barcode_text);
+                add_panel_ctrl.remove(date_picker);
+                add_panel_ctrl.remove(submit_button);
+                if (scrollPane != null)
+                {
+                    add_panel.remove(scrollPane);
+                }
+                break;
+            case "remove":
+                break;
+        }
+        pack();
+    }
+    
+    private void initComponents()
+    {
+        tabbedPane = new JTabbedPane();
+        
+        add_panel = makePanel();
+        add_panel_ctrl = initControlPanel("add");
+        add_panel.add(add_panel_ctrl);
         tabbedPane.add("Add", add_panel);
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         
-        remPanel = makePanel();
-        tabbedPane.add("Remove", remPanel);
+        remove_panel = makePanel();
+        tabbedPane.add("Remove", remove_panel);
         tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
         
-        viePanel = makePanel();
-        tabbedPane.add("View products", viePanel);
+        view_panel = makePanel();
+        tabbedPane.add("View products", view_panel);
         tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
         
         add(tabbedPane);
         //allows scrolling tabs
-        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     }
     
     private void filterData()
@@ -411,7 +473,8 @@ public class GUI extends JFrame
     {
         try
         {
-            if ("".equals(serString))
+            System.out.println(serString);
+            if (serString.equals(""))
             {
                 return new String[0][0];
             }
@@ -426,7 +489,8 @@ public class GUI extends JFrame
         return null;
     }
     
-    private void enableAddPanelControls(boolean enabled)
+    //should differ which panel
+    private void enablePanelControls(String tab, boolean enabled)
     {
         inputProduct_button.setEnabled(enabled);
         readBarcode_button.setEnabled(enabled);

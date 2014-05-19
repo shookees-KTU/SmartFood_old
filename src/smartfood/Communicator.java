@@ -73,7 +73,7 @@ public class Communicator extends Agent
             public void action()
             {
                 //reading ALL message received
-                String sender_name, msg_header, msg_body;
+                String sender_name;
                 ACLMessage msg = myAgent.receive();
                 if (msg != null)
                 {
@@ -110,6 +110,9 @@ public class Communicator extends Agent
                                 default:
                                     logger.log(Level.WARNING, "Unknown message ontology: " + msg.getOntology());
                             }
+                            break;
+                        default:
+                            logger.log(Level.WARNING, "Unknown performative: " + msg.getPerformative());
                             break;
                     }
                 }

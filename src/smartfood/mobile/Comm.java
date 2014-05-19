@@ -142,12 +142,18 @@ public class Comm extends Agent
      */
     public void getData(String data) throws InterruptedException
     {
+        
         sendMessage(server_comm.getName(), data, ACLMessage.REQUEST, "products-request");
     }
     
     public void addData(String content) throws InterruptedException
     {
         sendMessage(server_comm.getName(), content, ACLMessage.INFORM, "add-data");
+    }
+    
+    public void removeData(String content) throws InterruptedException
+    {
+        sendMessage(server_comm.getName(), content, ACLMessage.INFORM, "remove-data");
     }
     
     /**
