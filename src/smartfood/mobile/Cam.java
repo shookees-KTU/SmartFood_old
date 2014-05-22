@@ -66,4 +66,9 @@ public class Cam
     {
         return Webcam.getDefault();
     }
+    
+    public void stopWebcam()
+    {
+        getWebcam().close();
+    }
 }

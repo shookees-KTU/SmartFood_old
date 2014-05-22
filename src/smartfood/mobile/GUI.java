@@ -27,6 +27,7 @@ package smartfood.mobile;
 import com.github.sarxos.webcam.WebcamPanel;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import jade.wrapper.ControllerException;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -45,11 +46,14 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
@@ -69,32 +73,21 @@ public class GUI extends JFrame
 {
     private static final long serialVersionUID = 1L;
     private final Logger logger = Logger.getLogger(GUI.class.getName());
-    private JTabbedPane tabbedPane;
-    private JComponent add_panel;
-    private JComponent remove_panel;
-    private JComponent view_panel;
-    private JComponent add_panel_ctrl;
-    private JComponent remove_panel_ctrl;
     
-    private JButton add_readBarcode_button;
-    private JButton add_inputProduct_button;
-    private JButton rem_readBarcode_button;
-    private JButton rem_inputProduct_button;
-    private JTextField add_product_text;
-    private JTextField add_barcode_text;
-    private JTextField rem_product_text;
-    private JTextField rem_barcode_text;
-    private JScrollPane add_scrollPane;
-    private TableRowSorter<SFTableModel> add_sorter;
-    private JTable add_table;
-    private JButton add_submit_button;
-    private JDatePickerImpl add_date_picker;
-    private JScrollPane rem_scrollPane;
-    private TableRowSorter<SFTableModel> rem_sorter;
-    private JTable rem_table;
-    private JButton rem_submit_button;
-    private JDatePickerImpl rem_date_picker;
+    //main, consistent components
+    private JMenuBar menuBar;
+    private JComponent ctrlPanel;
+    private JComponent mainPanel;
+    
+    private TableRowSorter<SFTableModel> sorter;
+    private JTable table;
+    private JScrollPane scrollPane;
+    private JTextField product_text;
+    private JDatePickerImpl date_picker;
+    private JTextField barcode_text;
+    //cache of all products
     private String table_data = "";
+    //cache of currently added products
     private String table_current_data = "";
     
     
@@ -104,42 +97,143 @@ public class GUI extends JFrame
     
     public GUI(Comm comm) throws ControllerException
     {
+        //helpers
         c = new Cam();
         r = new Reader();
+        //communicator
         this.comm = comm;
+        //simple data
         setName("SmartFood");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(1, 1));
         setMinimumSize(new Dimension(480, 320));
+        
         initComponents();
         pack();
         setVisible(true);
     }
     
-    private JComponent initControlPanel(String tab)
+    /**
+     * Initiates the graphical components
+     */
+    private void initComponents()
+    {
+        //add menu
+        menuBar = initMenuBar();
+        setJMenuBar(menuBar);
+        
+        //add panels
+        initPanelState("view");
+    }
+    
+    /**
+     * Initiates the menu bar with menus and menu items
+     * @return main menu bar
+     */
+    private JMenuBar initMenuBar()
+    {
+        JMenuBar mb = new JMenuBar();
+        JMenu manage_menu = new JMenu("Manage");
+        manage_menu.setMnemonic(KeyEvent.VK_M);
+        manage_menu.getAccessibleContext().setAccessibleDescription("Manage products");
+        mb.add(manage_menu);
+        
+        //menu items
+        JMenuItem mitem = new JMenuItem("Add product");
+        mitem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK));
+        mitem.getAccessibleContext().setAccessibleDescription("Register a new product to SmartFood system");
+        mitem.addActionListener(new ActionListener()
+        {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                //opens add product
+                initPanelState("add");
+            }
+            
+        });
+        manage_menu.add(mitem);
+        
+        mitem = new JMenuItem("Remove product");
+        mitem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK));
+        mitem.getAccessibleContext().setAccessibleDescription("Remove an old/used product from SmartFood system");
+        mitem.addActionListener(new ActionListener()
+        {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                //opens remove product
+                initPanelState("remove");
+            }
+            
+        });
+        manage_menu.add(mitem);
+        
+        mitem = new JMenuItem("View current products");
+        mitem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK));
+        mitem.getAccessibleContext().setAccessibleDescription("View currently registered products");
+        mitem.addActionListener(new ActionListener()
+        {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                //opens view products list
+                initPanelState("view");
+            }
+            
+        });
+        manage_menu.add(mitem);
+        
+        return mb;
+                
+    }
+    
+    /**
+     * Simply reinitiates the state of main panel and control panel
+     * @param state name of state (add, remove, view)
+     */
+    private void initPanelState(String state)
+    {
+        if (mainPanel != null)
+        {
+            remove(mainPanel);
+        }
+        mainPanel = makePanel();
+        ctrlPanel = initControlPanel(state);
+        mainPanel.add(ctrlPanel);
+        add(mainPanel);
+        pack();
+    }
+    
+    /**
+     * Initiates the control panel for definable action
+     * @param action
+     * @return 
+     */
+    private JComponent initControlPanel(String action)
     {
         JComponent panel = makePanel();
-        switch(tab)
+        
+        switch(action)
         {
             case "add":
-                panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-                
-                add_readBarcode_button = getBarcodeButton(tab);
-                add_inputProduct_button = getInputProdButton(tab);
-                panel.add(add_readBarcode_button);
-                panel.add(add_inputProduct_button);
-                break;
             case "remove":
                 panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
                 
-                rem_readBarcode_button = getBarcodeButton(tab);
-                rem_inputProduct_button = getInputProdButton(tab);
-                panel.add(rem_readBarcode_button);
-                panel.add(rem_inputProduct_button);
+                JButton barcode_button = getBarcodeButton(action);
+                JButton input_button  = getInputProdButton(action);
+                panel.add(barcode_button);
+                panel.add(input_button);
                 break;
             case "view":
-                
+                //TODO: create viewable table
                 break;
+            default:
+                logger.log(Level.WARNING, 
+                        "Unknown action used for initiating ctrl panel");
         }
         return panel;
     }
@@ -147,10 +241,10 @@ public class GUI extends JFrame
     /**
      * General method for getting active barcode reader button which inhibits
      * webcam panel, reads the barcode, removes the panel and sends the data to server
-     * @param tab - tab name in which the button will be added
+     * @param action - 'add' or 'remove' action
      * @return "Read barcode" button
      */
-    private JButton getBarcodeButton(final String tab)
+    private JButton getBarcodeButton(final String action)
     {
         JButton button = new JButton("Read barcode");
         button.addActionListener(new ActionListener()
@@ -158,24 +252,16 @@ public class GUI extends JFrame
             @Override
             public void actionPerformed(ActionEvent e)
             {
-               Thread t = new Thread()
-               {
-                   @Override
-                   public void run()
-                   {
-                       try
-                       {
-                            enablePanelControls(tab, false);
+                Thread t = new Thread()
+                {
+                    @Override
+                    public void run()
+                    {
+                        try
+                        {
+                            enableComponents(ctrlPanel, false);
                             WebcamPanel webcam_panel = c.getPanel(true, true);
-                            switch(tab)
-                            {
-                                case "add":
-                                    add_panel.add(webcam_panel);
-                                    break;
-                                case "remove":
-                                    remove_panel.add(webcam_panel);
-                            }
-                            
+                            mainPanel.add(webcam_panel);
                             pack();
                             
                             //try to get the barcode
@@ -184,7 +270,7 @@ public class GUI extends JFrame
                             data.put("barcode", barcode);
                             data.put("expiry", "");
                             data.put("product", "");
-                            switch(tab)
+                            switch(action)
                             {
                                 case "add":
                                     comm.addData(data.toString());
@@ -196,21 +282,14 @@ public class GUI extends JFrame
                                     logger.log(Level.WARNING, "Unknown tab name!");
                             }
                             //get pack to previous state
-                            switch(tab)
-                            {
-                                case "add":
-                                    add_panel.remove(webcam_panel);
-                                    break;
-                                case "remove":
-                                    remove_panel.remove(webcam_panel);
-                            }
-                            enablePanelControls(tab, true);
-                            webcam_panel = null;
+                            mainPanel.remove(webcam_panel);
+                            c.stopWebcam();
+                            enableComponents(ctrlPanel, true);
                             pack();
-                       }catch (InterruptedException exc)
-                       {
-                           logger.log(Level.WARNING, "Thread has been interrupted!");
-                       }
+                        }catch (InterruptedException exc)
+                        {
+                            logger.log(Level.WARNING, "Thread has been interrupted!");
+                        }
                    }
                };
                t.start();
@@ -220,11 +299,12 @@ public class GUI extends JFrame
     }
     
     /**
-     * Return input product button
-     * @param tab
-     * @return 
+     * General method for getting active input reader button which inhibits live
+     * product name and barcode search, reads the inputand sends the data to server
+     * @param action 'add' or 'remove' action
+     * @return "Input product" button
      */
-    private JButton getInputProdButton(final String tab)
+        private JButton getInputProdButton(final String action)
     {
         JButton button = new JButton("Input product");
         button.addActionListener(new ActionListener()
@@ -240,46 +320,33 @@ public class GUI extends JFrame
                     {
                         try
                         {
-                            enablePanelControls(tab, false);
+                            enableComponents(ctrlPanel, false);
                             /*ask for asynchronous data retrieval. When retrieved
                              *the class global "table_data" will be changed*/
-                            waitForDataRetrieval(tab, 10);
-                            switch(tab)
+                            switch(action)
                             {
                                 case "add":
                                     comm.getData("products");
-                                    add_product_text = getTextField("Product name");
-                                    add_product_text.getDocument().addDocumentListener(getDataTableDocumentListener(tab, "input"));
-                                    add_date_picker = getDatePicker();
-                                    add_barcode_text = getTextField("Barcode");
-                                    add_barcode_text.getDocument().addDocumentListener(getDataTableDocumentListener(tab, "barcode"));
-                                    //submit button for control panel
-                                    add_submit_button = getSubmitButton(tab);
-
-                                    //adding to control panel
-                                    add_panel_ctrl.add(add_product_text);
-                                    add_panel_ctrl.add(add_barcode_text);
-                                    add_panel_ctrl.add(add_date_picker);
-                                    add_panel_ctrl.add(add_submit_button);
                                     break;
                                 case "remove":
                                     comm.getData("current-products");
-                                    rem_product_text = getTextField("Product name");
-                                    rem_product_text.getDocument().addDocumentListener(getDataTableDocumentListener(tab, "input"));
-                                    rem_barcode_text = getTextField("Barcode");
-                                    rem_barcode_text.getDocument().addDocumentListener(getDataTableDocumentListener(tab, "barcode"));
-                                    //submit button for control panel
-                                    rem_submit_button = getSubmitButton(tab);
-
-                                    //adding to control panel
-                                    remove_panel_ctrl.add(rem_product_text);
-                                    remove_panel_ctrl.add(rem_barcode_text);
-                                    remove_panel_ctrl.add(rem_submit_button);
-                                    break;
+                                    break;                                
                             }
+                            waitForDataRetrieval(action, 10);
+                            product_text = getTextField("Product name");
+                            product_text.getDocument().addDocumentListener(getDataTableDocumentListener(action, "input"));
+                            date_picker = getDatePicker();
+                            barcode_text = getTextField("Barcode");
+                            barcode_text.getDocument().addDocumentListener(getDataTableDocumentListener(action, "barcode"));
+                            JButton submit_button = getSubmitButton(action);
+                            ctrlPanel.add(product_text);
+                            ctrlPanel.add(barcode_text);
+                            ctrlPanel.add(date_picker);
+                            ctrlPanel.add(submit_button);
+                            
                             //I hate switches
                             String data = "";
-                            switch(tab)
+                            switch(action)
                             {
                                 case "add":
                                     data = table_data;
@@ -288,19 +355,12 @@ public class GUI extends JFrame
                                     data = table_current_data;
                                     break;
                             }
-                            if (data != "" && getProducts(data).length != 0)
+                            
+                            if (!data.equals("") && getProducts(data).length != 0)
                             {
                                 String[][] products = getProducts(data);
-                                switch(tab)
-                                {
-                                    case "add":
-                                        add_scrollPane = getDataTableSP(tab, products);
-                                        add_panel.add(add_scrollPane);
-                                        break;
-                                    case "remove":
-                                        rem_scrollPane = getDataTableSP(tab, products);
-                                        remove_panel.add(rem_scrollPane);
-                                }
+                                scrollPane = getDataTableSP(action, products);
+                                mainPanel.add(scrollPane);
                             }
                             pack();
                         }catch(InterruptedException exc)
@@ -376,26 +436,12 @@ public class GUI extends JFrame
         SFTableModel model = new SFTableModel();
         model.setData(tableData);
         JScrollPane pane = new JScrollPane();
-        switch(tab)
-        {
-            case "add":
-                add_sorter = new TableRowSorter<>(model);
-                add_table = new JTable(model);
-                add_table.setRowSorter(add_sorter);
-                add_table.setFillsViewportHeight(true);
-                add_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                pane = new JScrollPane(add_table);
-                break;
-            case "remove":
-                rem_sorter = new TableRowSorter<>(model);
-                rem_table = new JTable(model);
-                rem_table.setRowSorter(rem_sorter);
-                rem_table.setFillsViewportHeight(true);
-                rem_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                pane = new JScrollPane(rem_table);
-                break;
-        }
-        
+        sorter = new TableRowSorter<>(model);
+        table = new JTable(model);
+        table.setRowSorter(sorter);
+        table.setFillsViewportHeight(true);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        pane = new JScrollPane(table);
         return pane;
     }
     
@@ -411,19 +457,19 @@ public class GUI extends JFrame
             @Override
             public void insertUpdate(DocumentEvent e)
             {
-                filterData(tab, target);
+                filterData(target);
             }
 
             @Override
             public void removeUpdate(DocumentEvent e)
             {
-                filterData(tab, target);
+                filterData(target);
             }
 
             @Override
             public void changedUpdate(DocumentEvent e)
             {
-                filterData(tab, target);
+                filterData(target);
             }   
         };
         return dl;
@@ -434,7 +480,7 @@ public class GUI extends JFrame
      * @param tab tab name
      * @return button for submission
      */
-    private JButton getSubmitButton(final String tab)
+    private JButton getSubmitButton(final String action)
     {
         JButton button = new JButton("Submit");
         button.addActionListener(new ActionListener()
@@ -444,54 +490,43 @@ public class GUI extends JFrame
             {
                 try
                 {
-                    if (add_scrollPane != null && add_table.getSelectedRow() != -1)
+                    if (scrollPane != null && table.getSelectedRow() != -1)
                     {
                         JSONObject data = new JSONObject();
-                        switch(tab)
-                        {
-                            case "add":
-                                data.put("product", add_table.getValueAt(add_table.getSelectedRow(), 0).toString().trim());
-                                data.put("barcode", add_table.getValueAt(add_table.getSelectedRow(), 1).toString().trim());
-                                data.put("expiry", add_table.getValueAt(add_table.getSelectedRow(), 2).toString().trim());
-                                break;
-                            case "remove":
-                                data.put("product", rem_table.getValueAt(rem_table.getSelectedRow(), 0).toString().trim());
-                                data.put("barcode", rem_table.getValueAt(rem_table.getSelectedRow(), 1).toString().trim());
-                                data.put("expiry", rem_table.getValueAt(rem_table.getSelectedRow(), 2).toString().trim());
-                                break;
-                        }
+                        data.put("product", table.getValueAt(table.getSelectedRow(), 0).toString().trim());
+                        data.put("barcode", table.getValueAt(table.getSelectedRow(), 1).toString().trim());
+                        data.put("expiry", table.getValueAt(table.getSelectedRow(), 2).toString().trim());
                         
                         comm.addData(data.toString());
                         logger.log(Level.INFO, "Adding {0}", 
-                                add_table.getValueAt(add_table.getSelectedColumn(), 0).toString());
+                                table.getValueAt(table.getSelectedColumn(), 0).toString());
                     }else
                     {
                         JSONObject data = new JSONObject();
-                        data.put("product", add_product_text.getText().trim());
-                        data.put("barcode", add_barcode_text.getText().trim());
+                        data.put("product", product_text.getText().trim());
+                        data.put("barcode", barcode_text.getText().trim());
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                        if (add_date_picker.getModel().getValue() == null)
+                        if (date_picker.getModel().getValue() == null)
                         {
                             data.put("expiry", "");
                         }else
                         {
-                            data.put("expiry", sdf.format(add_date_picker.getModel().getValue()));
+                            data.put("expiry", sdf.format(date_picker.getModel().getValue()));
                         }
                         comm.addData(data.toString().trim());
                         logger.log(Level.INFO, 
-                                "Adding {0}", add_product_text.getText());
+                                "Adding {0}", product_text.getText());
                     }
-                    enablePanelControls(tab, true);
-                    //remove controls and scrollpane
-                    removeControls(tab);
+                    enableComponents(ctrlPanel, true);
+                    initPanelState(action);
                     //refresh data
-                    switch(tab)
+                    switch(action)
                     {
                         case "add":
                             comm.getData("products");
                             break;
                         case "remove":
-                            comm.getData("");
+                            comm.getData("current-products");
                     }
                 }catch(InterruptedException exc)
                 {
@@ -502,95 +537,22 @@ public class GUI extends JFrame
         return button;
     }
     
-    private void removeControls(String tab)
-    {
-        switch(tab)
-        {
-            case "add":
-                add_panel_ctrl.remove(add_product_text);
-                add_panel_ctrl.remove(add_barcode_text);
-                add_panel_ctrl.remove(add_date_picker);
-                add_panel_ctrl.remove(add_submit_button);
-                if (add_scrollPane != null)
-                {
-                    add_panel.remove(add_scrollPane);
-                }
-                break;
-            case "remove":
-                remove_panel_ctrl.remove(rem_product_text);
-                remove_panel_ctrl.remove(rem_barcode_text);
-                remove_panel_ctrl.remove(rem_date_picker);
-                remove_panel_ctrl.remove(rem_submit_button);
-                if (add_scrollPane != null)
-                {
-                    remove_panel.remove(rem_scrollPane);
-                }
-                break;
-        }
-        pack();
-    }
     
-    private void initComponents()
-    {
-        tabbedPane = new JTabbedPane();
-        
-        add_panel = makePanel();
-        add_panel_ctrl = initControlPanel("add");
-        add_panel.add(add_panel_ctrl);
-        tabbedPane.add("Add", add_panel);
-        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
-        
-        remove_panel = makePanel();
-        remove_panel_ctrl = initControlPanel("remove");
-        remove_panel.add(remove_panel_ctrl);
-        tabbedPane.add("Remove", remove_panel);
-        tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
-        
-        view_panel = makePanel();
-        tabbedPane.add("View products", view_panel);
-        tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
-        
-        add(tabbedPane);
-        //allows scrolling tabs
-    }
-    
-    private void filterData(String tab, String whatToFilter)
+    private void filterData(String whatToFilter)
     {
         try
         {
             RowFilter<SFTableModel, Object> rf = null;
-            switch(tab)
+            switch(whatToFilter)
             {
-                case "add":
-                    switch(whatToFilter)
-                    {
-                        case "barcode":
-                            rf = RowFilter.regexFilter(add_product_text.getText(), 0);
-                            add_sorter.setRowFilter(rf);
-                            break;
-                        case "input":
-                            rf = RowFilter.regexFilter(add_barcode_text.getText(), 0);
-                            add_sorter.setRowFilter(rf);
-                            break;
-                    }
+                case "barcode":
+                    rf = RowFilter.regexFilter(product_text.getText(), 0);
                     break;
-                case "remove":
-                    switch(whatToFilter)
-                    {
-                        case "barcode":
-                            rf = RowFilter.regexFilter(rem_product_text.getText(), 0);
-                            rem_sorter.setRowFilter(rf);
-                            break;
-                        case "input":
-                            rf = RowFilter.regexFilter(rem_barcode_text.getText(), 0);
-                            rem_sorter.setRowFilter(rf);
-                            break;
-                    }
+                case "input":
+                    rf = RowFilter.regexFilter(barcode_text.getText(), 0);
                     break;
             }
-            
-            
+            sorter.setRowFilter(rf);
         }catch(PatternSyntaxException ex)
         {
             logger.log(Level.SEVERE, null, ex);
@@ -642,21 +604,13 @@ public class GUI extends JFrame
         return null;
     }
     
-    //should differ which panel
-    private void enablePanelControls(String tab, boolean enabled)
+    private void enableComponents(JComponent panel, boolean enable)
     {
-        switch(tab)
+        Component[] components = panel.getComponents();
+        for (Component c : components)
         {
-            case "add":
-                add_inputProduct_button.setEnabled(enabled);
-                add_readBarcode_button.setEnabled(enabled);
-                break;
-            case "remove":
-                rem_inputProduct_button.setEnabled(enabled);
-                rem_readBarcode_button.setEnabled(enabled);
-                break;
+            c.setEnabled(enable);
         }
-        
     }
     
     private String retrieveBarcode()
