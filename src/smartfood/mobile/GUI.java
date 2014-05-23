@@ -124,9 +124,15 @@ public class GUI extends JFrame
         //add menu
         menuBar = initMenuBar();
         setJMenuBar(menuBar);
-        
-        //add panels
-        initPanelState("view");
+        //initial cache
+        try
+        {
+            comm.getData("current-products");
+            comm.getData("products");
+        }catch (InterruptedException exc)
+        {
+            logger.log(Level.SEVERE, "Failed to retrieve data");
+        }
     }
     
     /**
@@ -278,8 +284,25 @@ public class GUI extends JFrame
                 panel.add(input_button);
                 break;
             case "view":
-                //TODO: create viewable table
+                try
+                {
+                    //shows current products
+                    comm.getData("current-products");
+                    waitForDataRetrieval(action, 10);
+                    if (!table_current_data.equals("") && 
+                            getProducts(table_current_data).length != 0)
+                    {
+                        String[][] products = getProducts(table_current_data);
+                        scrollPane = getDataTableSP(products);
+                        panel.add(scrollPane);
+                    }
+                } catch (InterruptedException ex)
+                {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
                 break;
+
             case "about":
                 //show a simple about panel
                 panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
@@ -462,7 +485,7 @@ public class GUI extends JFrame
                             if (!data.equals("") && getProducts(data).length != 0)
                             {
                                 String[][] products = getProducts(data);
-                                scrollPane = getDataTableSP(action, products);
+                                scrollPane = getDataTableSP(products);
                                 mainPanel.add(scrollPane);
                             }
                             pack();
@@ -507,6 +530,7 @@ public class GUI extends JFrame
      */
     private void waitForDataRetrieval(String tab, int waitSeconds)
     {
+        //FIXME: do not rely on table_data, rather add a flag
         Calendar current_time = Calendar.getInstance();
         current_time.setTime(new Date());
         Calendar wait_time = Calendar.getInstance();
@@ -520,6 +544,7 @@ public class GUI extends JFrame
                 wait_time.get(Calendar.SECOND))
                 break;
             case "remove":
+            case "view":
                 while(table_current_data.equals("") &&
                 current_time.get(Calendar.SECOND) !=
                 wait_time.get(Calendar.SECOND))
@@ -534,7 +559,7 @@ public class GUI extends JFrame
      * @param tableData data to populate
      * @return scroll pane  for the table model
      */
-    private JScrollPane getDataTableSP(String tab, String[][] tableData)
+    private JScrollPane getDataTableSP(String[][] tableData)
     {
         SFTableModel model = new SFTableModel();
         model.setData(tableData);

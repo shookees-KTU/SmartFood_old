@@ -85,6 +85,7 @@ public class Communicator extends Agent
                             switch(msg.getOntology())
                             {
                                 case "products-request":
+                                case "current-products-request":
                                     //asking for the list of all products
                                     sendMessage(sf_aid.getName(), msg.getContent(), ACLMessage.REQUEST, msg.getOntology());
                                     

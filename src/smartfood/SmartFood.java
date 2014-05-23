@@ -133,18 +133,12 @@ public class SmartFood extends Agent
                             switch (msg.getOntology())
                             {
                                 case "products-request":
+                                    String b64str = stringMatrixToBase64(getUsedProducts());
+                                    sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
                                     //requests for the whole list of products
-                                    switch(msg.getContent())
-                                    {
-                                        case "current-products":
-                                            String b64str = stringMatrixToBase64(getCurrentProducts());
-                                            sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
-                                            break;
-                                        case "products":
-                                            b64str = stringMatrixToBase64(getUsedProducts());
-                                            sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
-                                            break;
-                                    }
+                                case "current-products-request":
+                                    b64str = stringMatrixToBase64(getCurrentProducts());
+                                    sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
                                     break;
                                 case "add-data":
                                     //add data to database

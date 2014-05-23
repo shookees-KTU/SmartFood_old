@@ -144,8 +144,12 @@ public class Comm extends Agent
      */
     public void getData(String data) throws InterruptedException
     {
-        
-        sendMessage(server_comm.getName(), data, ACLMessage.REQUEST, "products-request");
+        String ontology = "products-request";
+        if (data.equals("current-products"))
+        {
+            ontology = "current-products-request";
+        }
+        sendMessage(server_comm.getName(), data, ACLMessage.REQUEST, ontology);
     }
     
     public void addData(String content) throws InterruptedException
