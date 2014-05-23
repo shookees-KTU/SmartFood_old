@@ -33,6 +33,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
@@ -212,6 +213,32 @@ public class SmartFood extends Agent
                 }
             }
             
+        });
+        
+        /**database handler:
+         * read database for unfilled values, try to add via other agents
+         */
+        addBehaviour(new CyclicBehaviour(this) 
+        {
+            @Override
+            public void action()
+            {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        });
+        
+        /**expiry viewer:
+         * watches for product expiry dates
+         * as products are defined 24 hours within, it check only twice per day
+         */
+        int ticker = 12 * 60 * 60 * 1000;//hours*minutes*seconds*miliseconds
+        addBehaviour(new TickerBehaviour(this, ticker) 
+        {
+            @Override
+            protected void onTick()
+            {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
         });
     }
     
