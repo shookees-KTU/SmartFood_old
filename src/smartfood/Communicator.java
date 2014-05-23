@@ -97,7 +97,7 @@ public class Communicator extends Agent
                                             ACLMessage.INFORM, msg.getOntology());
                                     break;
                                 default:
-                                    logger.log(Level.WARNING, "Unknown message ontology: " + msg.getOntology());
+                                    logger.log(Level.WARNING, "REQUEST: Unknown message ontology: " + msg.getOntology());
                                     break;
                             }
                             break;
@@ -112,7 +112,7 @@ public class Communicator extends Agent
                                     sendMessage(sf_aid.getName(), msg.getContent(), msg.getPerformative(), msg.getOntology());
                                     break;
                                 default:
-                                    logger.log(Level.WARNING, "Unknown message ontology: " + msg.getOntology());
+                                    logger.log(Level.WARNING, "INFORM: Unknown message ontology: " + msg.getOntology());
                             }
                             break;
                         default:
