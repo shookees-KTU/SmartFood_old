@@ -28,12 +28,14 @@ import com.github.sarxos.webcam.WebcamPanel;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import jade.wrapper.ControllerException;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.text.SimpleDateFormat;
@@ -52,6 +54,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -187,6 +190,52 @@ public class GUI extends JFrame
         });
         manage_menu.add(mitem);
         
+        JMenu help_menu = new JMenu("Help");
+        help_menu.setMnemonic(KeyEvent.VK_H);
+        help_menu.getAccessibleContext().setAccessibleDescription("Get help about this products");
+        mb.add(help_menu);
+        
+        //menu items
+        mitem = new JMenuItem("Documentation");
+        mitem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
+        mitem.getAccessibleContext().setAccessibleDescription("Read the documentation of this program");
+        mitem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                //should open a premade PDF file
+                if (Desktop.isDesktopSupported()) 
+                {
+                    try 
+                    {
+                        File myFile = new File("documentation.pdf");
+                        Desktop.getDesktop().open(myFile);
+                    } catch (IOException ex) {
+                        // no application registered for PDFs
+                        logger.log(Level.SEVERE, "No application registered for PDFs, can't open it");
+                    }
+                }else
+                {
+                    logger.log(Level.SEVERE, "Desktop is not supported");
+                }
+            }
+        });
+        help_menu.add(mitem);
+        
+        mitem = new JMenuItem("About");
+        mitem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_5, ActionEvent.ALT_MASK));
+        mitem.getAccessibleContext().setAccessibleDescription("About this program");
+        mitem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                initPanelState("about");
+            }
+        });
+        help_menu.add(mitem);
+        
         return mb;
                 
     }
@@ -231,9 +280,63 @@ public class GUI extends JFrame
             case "view":
                 //TODO: create viewable table
                 break;
+            case "about":
+                //show a simple about panel
+                panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+                JButton program_button = new JButton("About SmartFood");
+                program_button.addActionListener(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        //shows data about the program
+                        initPanelState("about");
+                        JTextArea textArea = new JTextArea(
+                        "SmartFood is a program for managing your "
+                                + "currents food products. By saving products, "
+                                + "SmartFood is capable of learning about the "
+                                + "expiry data of each product, so that it "
+                                + "would remind about product's upcoming "
+                                + "expiry. This program is an MIT licensed "
+                                + "open source project. You can fork it at "
+                                + "https://github.com/shookees/SmartFood",15,20);
+                        JScrollPane about_scrollPane = new JScrollPane(textArea);
+                        textArea.setEditable(false);
+                        textArea.setLineWrap(true);
+                        textArea.setWrapStyleWord(true);
+                        mainPanel.add(about_scrollPane);
+                        pack();
+                    }
+                });
+                JButton developer_button = new JButton("About the developer");
+                developer_button.addActionListener(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        //shows data about the developer
+                        initPanelState("about");
+                        JTextArea textArea = new JTextArea(
+                        "The developer, Paulius Šukys, is a 3rd course "
+                                + "informatics engineering student at Kaunas "
+                                + "University of Technology. This program is "
+                                + "a project work for Multi-Agent Systems "
+                                + "Fundamentals module.", 15, 20);
+                        JScrollPane about_scrollPane = new JScrollPane(textArea);
+                        textArea.setEditable(false);
+                        textArea.setLineWrap(true);
+                        textArea.setWrapStyleWord(true);
+                        mainPanel.add(about_scrollPane);
+                        pack();
+                    }
+                });
+                panel.add(program_button);
+                panel.add(developer_button);
+                break;
             default:
                 logger.log(Level.WARNING, 
                         "Unknown action used for initiating ctrl panel");
+                break;
         }
         return panel;
     }
