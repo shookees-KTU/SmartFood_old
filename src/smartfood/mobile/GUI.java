@@ -625,7 +625,15 @@ public class GUI extends JFrame
                         data.put("barcode", table.getValueAt(table.getSelectedRow(), 1).toString().trim());
                         data.put("expiry", table.getValueAt(table.getSelectedRow(), 2).toString().trim());
                         
-                        comm.addData(data.toString());
+                        switch(action)
+                        {
+                            case "add":
+                                comm.addData(data.toString());
+                                break;
+                            case "remove":
+                                comm.removeData(data.toString());
+                        }
+                        
                         logger.log(Level.INFO, "Adding {0}", 
                                 table.getValueAt(table.getSelectedColumn(), 0).toString());
                     }else
@@ -641,7 +649,15 @@ public class GUI extends JFrame
                         {
                             data.put("expiry", sdf.format(date_picker.getModel().getValue()));
                         }
-                        comm.addData(data.toString().trim());
+                        
+                        switch(action)
+                        {
+                            case "add":
+                                comm.addData(data.toString());
+                                break;
+                            case "remove":
+                                comm.removeData(data.toString());
+                        }
                         logger.log(Level.INFO, 
                                 "Adding {0}", product_text.getText());
                     }

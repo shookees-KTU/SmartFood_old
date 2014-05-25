@@ -27,6 +27,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import jade.core.AID;
@@ -223,7 +224,16 @@ public class SmartFood extends Agent
             @Override
             public void action()
             {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                //if the expiry date is not set, the default time is 1 week
+                /*DBCollection p  = mongo_db.getCollection("products");
+                DBCollection c  = mongo_db.getCollection("current_products");
+                DBCursor prod = p.find();
+                while (prod.hasNext())
+                {
+                    DBObject obj = prod.next();
+                    System.out.println("DB-UPDATER: " + obj);
+                    //obj.get("expiry")
+                }*/
             }
         });
         
@@ -237,7 +247,7 @@ public class SmartFood extends Agent
             @Override
             protected void onTick()
             {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                    
             }
         });
     }
