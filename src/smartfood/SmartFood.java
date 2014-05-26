@@ -43,6 +43,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.simple.JSONObject;
@@ -137,6 +139,7 @@ public class SmartFood extends Agent
                                 case "products-request":
                                     String b64str = stringMatrixToBase64(getUsedProducts());
                                     sendMessage(sender_name, b64str, ACLMessage.INFORM, msg.getOntology());
+                                    break;
                                     //requests for the whole list of products
                                 case "current-products-request":
                                     b64str = stringMatrixToBase64(getCurrentProducts());
@@ -219,21 +222,65 @@ public class SmartFood extends Agent
         /**database handler:
          * read database for unfilled values, try to add via other agents
          */
-        addBehaviour(new CyclicBehaviour(this) 
+        int db_ticker = 1*60*1000;//every 5 minutes
+        addBehaviour(new TickerBehaviour(this, db_ticker) 
         {
             @Override
-            public void action()
+            public void onTick()
             {
+                logger.log(Level.INFO, "Updating database");
                 //if the expiry date is not set, the default time is 1 week
-                /*DBCollection p  = mongo_db.getCollection("products");
+                DBCollection p  = mongo_db.getCollection("products");
                 DBCollection c  = mongo_db.getCollection("current_products");
                 DBCursor prod = p.find();
+                //get current date.
+                Date d = new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 while (prod.hasNext())
                 {
                     DBObject obj = prod.next();
-                    System.out.println("DB-UPDATER: " + obj);
-                    //obj.get("expiry")
-                }*/
+                    DBObject newObj = new BasicDBObject();
+                    if (obj.get("expiry").equals(""))
+                    {
+                        newObj.put("_id", obj.get("_id"));
+                        newObj.put("product", obj.get("product"));
+                        newObj.put("barcode", obj.get("barcode"));
+                        newObj.put("expiry", sdf.format(d));
+                        p.update(obj, newObj);
+                    }
+                }
+                
+                DBCursor cprod = c.find();
+                while (cprod.hasNext())
+                {
+                    //also check product database
+                    DBObject obj = cprod.next();
+                    DBObject newObj = new BasicDBObject();
+                    if (obj.get("expiry").equals(""))
+                    {                        
+                        logger.log(Level.INFO, "Updating product '" 
+                                + obj.get("product") + "'");
+                        newObj.put("product", obj.get("product"));
+                        newObj.put("barcode", obj.get("barcode"));
+                        
+                        DBObject found = p.findOne(newObj);
+                        if (found != null && !found.get("expiry").equals(""))
+                        {
+                            logger.log(Level.INFO, "Expiry date found in "
+                                    + "database: " + found.get("expiry"));
+                            newObj.put("expiry", found.get("expiry"));
+                        }else
+                        {
+                            logger.log(Level.INFO, "Expiry date not found in "
+                                    + "database, adding default +week: "
+                                    + sdf.format(d));
+                            newObj.put("expiry", sdf.format(d));
+                        }
+                        
+                        newObj.put("_id", obj.get("_id"));
+                        c.update(obj, newObj);
+                    }
+                }
             }
         });
         
@@ -241,8 +288,8 @@ public class SmartFood extends Agent
          * watches for product expiry dates
          * as products are defined 24 hours within, it check only twice per day
          */
-        int ticker = 12 * 60 * 60 * 1000;//hours*minutes*seconds*miliseconds
-        addBehaviour(new TickerBehaviour(this, ticker) 
+        int expiry_ticker = 12 * 60 * 60 * 1000;//hours*minutes*seconds*miliseconds
+        addBehaviour(new TickerBehaviour(this, expiry_ticker) 
         {
             @Override
             protected void onTick()

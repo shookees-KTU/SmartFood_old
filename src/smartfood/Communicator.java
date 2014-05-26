@@ -111,6 +111,8 @@ public class Communicator extends Agent
                                 case "remove-data":
                                     sendMessage(sf_aid.getName(), msg.getContent(), msg.getPerformative(), msg.getOntology());
                                     break;
+                                case "current-products-request":
+                                    break;
                                 default:
                                     logger.log(Level.WARNING, "INFORM: Unknown message ontology: " + msg.getOntology());
                             }

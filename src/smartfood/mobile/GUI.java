@@ -731,6 +731,7 @@ public class GUI extends JFrame
      */
     private String[][] getProducts(String serString)
     {
+        //deserialize to json, header crashes occur
         try
         {
             if (serString.equals(""))
@@ -740,6 +741,14 @@ public class GUI extends JFrame
             ByteArrayInputStream in;
             in = new ByteArrayInputStream(Base64.decode(serString));
             String[][] ret = (String[][]) new ObjectInputStream(in).readObject();
+            for (int i = 0; i < ret.length; i++)
+            {
+                for (int j = 0; j < ret[i].length; j++)
+                {
+                    System.out.print(ret[i][j]+"|");
+                }
+                System.out.println();
+            }
             return ret;
         } catch (IOException | ClassNotFoundException ex)
         {
