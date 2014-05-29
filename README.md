@@ -1,4 +1,8 @@
 SmartFood
 =========
 
-Kodo repozitorija KTU Daugiaagenčių sistemų pagrindų kursiniam projektui
+A smart system for tracking your food.
+
+Requirements
+------------
+* Java Agent Development Environment (jade.tilab.com)

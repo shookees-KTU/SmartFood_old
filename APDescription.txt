@@ -1,1 +1,0 @@
-( ap-description  :name "SmartFoodSystem" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://E520:7778/acc))))
