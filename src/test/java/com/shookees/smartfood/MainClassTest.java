@@ -7,17 +7,32 @@ import junit.framework.TestSuite;
 /**
  * Unit test for simple Application.
  */
-public class AppTest 
+public class MainClassTest 
     extends TestCase
 {
+
     /**
      * Create the test case
      *
      * @param testName name of the test case
      */
-    public AppTest( String testName )
+    public MainClassTest( String testName )
     {
         super( testName );
+    }    /**
+     * Initial set up for testing
+     */
+    protected void setUp()
+    {
+    	
+    }
+    
+    /**
+     * Final destructor
+     */
+    protected void tearDown()
+    {
+    	
     }
 
     /**
@@ -25,14 +40,14 @@ public class AppTest
      */
     public static Test suite()
     {
-        return new TestSuite( AppTest.class );
+        return new TestSuite( MainClassTest.class );
     }
 
     /**
-     * Rigorous Test :-)
+     * Smoke test
      */
-    public void testApp()
+    public void testSmoke()
     {
-        assertTrue( true );
+        
     }
 }

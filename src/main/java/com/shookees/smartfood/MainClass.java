@@ -24,14 +24,66 @@
 
 package com.shookees.smartfood;
 
+import java.io.IOException;
+
 /**
- * Hello world!
+ * Deployment and operations agent
+ * 
+ * @author shookees
  *
  */
-public class App 
+public class MainClass
 {
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
-    }
+	MainServer ms;
+	/**
+	 * Main class - server class, deploys services that work around server
+	 */
+	public MainClass()
+	{
+		ms = new MainServer(1410);
+	}
+	
+
+	/**
+	 * This function is only for assignment distribution
+	 * Works in the following case:
+	 * - Looks for assigned tasks
+	 * - Looks for I/O
+	 */
+	protected void mainLoop()
+	{
+		while(true)
+		{
+			if (checkTasks())
+			{
+				
+			}
+			if (checkInput())
+			{
+				
+			}
+			
+			if (checkOutput())
+			{
+				
+			}
+			
+		}
+	}
+
+	private boolean checkOutput() 
+	{
+		return false;
+	}
+
+	private boolean checkInput() 
+	{
+		
+		return false;
+	}
+
+	private boolean checkTasks() 
+	{
+		return false;
+	}
 }

@@ -8,10 +8,6 @@
   <name>SmartFood</name>
   <url>http://maven.apache.org</url>
   <repositories>
-  	<repository>
-  		<id>tilab</id>
-  		<url>http://jade.tilab.com/maven/</url>
-  	</repository>
   </repositories>
   <dependencies>
     <dependency>
@@ -21,14 +17,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-    	<groupId>com.tilab.jade</groupId>
-    	<artifactId>jade</artifactId>
-    	<version>4.3.1</version>
-    </dependency>
-    <dependency>
-    	<groupId>com.tilab.jade</groupId>
-    	<artifactId>jade-test-suite</artifactId>
-    	<version>1.11.0</version>
+    	<groupId>org.bouncycastle</groupId>
+    	<artifactId>bcprov-jdk15on</artifactId>
+    	<version>1.50</version>
     </dependency>
   </dependencies>
 </project>
